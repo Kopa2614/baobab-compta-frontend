@@ -14,16 +14,21 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: deploy
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
           script: |
             set -e
             cd /var/www/baobab-compta-frontend
 
-            git pull origin main
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/Kopa2614/baobab-compta-frontend.git .
+            else
+              git pull origin main
+            fi
 
             npm ci
-
             npm run build
 
-            pm2 restart baobab-frontend || pm2 start npm --name baobab-frontend -- start
+            pm2 describe baobab-frontend > /dev/null 2>&1 \
+              && pm2 restart baobab-frontend \
+              || pm2 start npm --name "baobab-frontend" -- start
+
             pm2 save
