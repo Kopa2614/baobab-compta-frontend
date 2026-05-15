@@ -16,6 +16,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
+            export PATH=$PATH:/usr/local/bin:/usr/bin
             cd /var/www/baobab-compta-frontend
 
             if [ ! -d ".git" ]; then
