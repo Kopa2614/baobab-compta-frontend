@@ -26,6 +26,7 @@ jobs:
             fi
 
             npm ci
+            rm -rf .next
             npm run build
 
             pm2 describe baobab-frontend > /dev/null 2>&1 \
