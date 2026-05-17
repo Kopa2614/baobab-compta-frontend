@@ -8,6 +8,7 @@ import {
   useCreateCaisse, useUpdateCaisse, useToggleCaisse,
 } from '@/hooks/useTresorerie';
 import { useProduits, useCreateProduit, useUpdateProduit, useToggleProduit } from '@/hooks/useProduits';
+import { useFraisCategories, useCreateCategorie, useUpdateCategorie, useDeleteCategorie } from '@/hooks/useFrais';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,8 +16,8 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { BadgeRole } from '@/components/ui/Badge';
 import { formatTelephone, formatFCFA } from '@/lib/utils';
-import { Building2, Users, Save, Plus, Power, Landmark, Package, Pencil, Archive, ArchiveRestore } from 'lucide-react';
-import type { Produit, CompteBancaire, Caisse } from '@/types';
+import { Building2, Users, Save, Plus, Power, Landmark, Package, Pencil, Archive, ArchiveRestore, Tag, Trash2 } from 'lucide-react';
+import type { Produit, CompteBancaire, Caisse, CategorieFrais } from '@/types';
 
 const ROLES = [
   { value: 'gerant', label: 'Gérant / Admin' },
@@ -24,12 +25,13 @@ const ROLES = [
   { value: 'comptable', label: 'Comptable' },
 ];
 
-type Tab = 'entreprise' | 'comptes' | 'produits' | 'utilisateurs';
+type Tab = 'entreprise' | 'comptes' | 'produits' | 'categories' | 'utilisateurs';
 
 const TABS: { key: Tab; label: string; Icon: React.ElementType }[] = [
   { key: 'entreprise', label: 'Entreprise', Icon: Building2 },
   { key: 'comptes', label: 'Comptes & Caisses', Icon: Landmark },
   { key: 'produits', label: 'Produits / Services', Icon: Package },
+  { key: 'categories', label: 'Catégories de frais', Icon: Tag },
   { key: 'utilisateurs', label: 'Utilisateurs', Icon: Users },
 ];
 
@@ -155,6 +157,47 @@ export default function ParametresPage() {
           onError: (e: any) => setCaisseError(e.response?.data?.message ?? 'Erreur'),
         }
       );
+    }
+  }
+
+  // ── Catégories de frais ──
+  const { data: categories, isLoading: loadingCat } = useFraisCategories();
+  const { mutate: createCategorie, isPending: creatingCat } = useCreateCategorie();
+  const { mutate: updateCategorie, isPending: updatingCat } = useUpdateCategorie();
+  const { mutate: deleteCategorie } = useDeleteCategorie();
+
+  const [catModal, setCatModal] = useState<'create' | 'edit' | null>(null);
+  const [selectedCat, setSelectedCat] = useState<CategorieFrais | null>(null);
+  const [catForm, setCatForm] = useState({ nom: '', description: '' });
+  const [catError, setCatError] = useState('');
+
+  function openCreateCat() {
+    setSelectedCat(null);
+    setCatForm({ nom: '', description: '' });
+    setCatError('');
+    setCatModal('create');
+  }
+
+  function openEditCat(c: CategorieFrais) {
+    setSelectedCat(c);
+    setCatForm({ nom: c.nom, description: c.description ?? '' });
+    setCatError('');
+    setCatModal('edit');
+  }
+
+  function handleSaveCat() {
+    if (!catForm.nom.trim()) { setCatError('Le nom est obligatoire'); return; }
+    setCatError('');
+    if (catModal === 'create') {
+      createCategorie(catForm, {
+        onSuccess: () => setCatModal(null),
+        onError: (e: any) => setCatError(e.response?.data?.message ?? 'Erreur'),
+      });
+    } else if (selectedCat) {
+      updateCategorie({ id: selectedCat.id, ...catForm }, {
+        onSuccess: () => { setCatModal(null); setSelectedCat(null); },
+        onError: (e: any) => setCatError(e.response?.data?.message ?? 'Erreur'),
+      });
     }
   }
 
@@ -402,6 +445,54 @@ export default function ParametresPage() {
         </div>
       )}
 
+      {/* ── Onglet Catégories de frais ── */}
+      {tab === 'categories' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Catégories utilisées pour classer les frais généraux.</p>
+            <Button size="sm" onClick={openCreateCat}><Plus size={15} /> Nouvelle catégorie</Button>
+          </div>
+          <Card>
+            {loadingCat ? (
+              <div className="flex justify-center h-16 items-center">
+                <div className="w-5 h-5 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left p-4 font-medium text-gray-500">Nom</th>
+                    <th className="text-left p-4 font-medium text-gray-500">Description</th>
+                    <th className="text-center p-4 font-medium text-gray-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(categories ?? []).map((c) => (
+                    <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
+                      <td className="p-4 font-medium text-gray-900">{c.nom}</td>
+                      <td className="p-4 text-gray-500">{c.description ?? '—'}</td>
+                      <td className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-3">
+                          <button onClick={() => openEditCat(c)} className="text-gray-400 hover:text-blue-600 transition-colors">
+                            <Pencil size={15} />
+                          </button>
+                          <button onClick={() => deleteCategorie(c.id)} className="text-gray-400 hover:text-red-500 transition-colors">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {!categories?.length && (
+                    <tr><td colSpan={3} className="p-8 text-center text-gray-400">Aucune catégorie — créez-en une pour commencer</td></tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </Card>
+        </div>
+      )}
+
       {/* ── Onglet Produits / Services ── */}
       {tab === 'produits' && (
         <div className="space-y-3">
@@ -583,6 +674,34 @@ export default function ParametresPage() {
               <Button variant="secondary" className="flex-1 justify-center" onClick={() => { setProduitModal(null); setSelectedProduit(null); }}>Annuler</Button>
               <Button className="flex-1 justify-center" loading={isProduitPending} onClick={handleSaveProduit}>
                 {produitModal === 'create' ? 'Créer' : 'Enregistrer'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {catModal && (
+        <Modal
+          title={catModal === 'create' ? 'Nouvelle catégorie' : `Modifier — ${selectedCat?.nom}`}
+          onClose={() => { setCatModal(null); setSelectedCat(null); }}
+        >
+          <div className="space-y-4">
+            <Input label="Nom *" value={catForm.nom} onChange={(e) => setCatForm({ ...catForm, nom: e.target.value })} placeholder="Loyer, Fournitures, Transport..." />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                value={catForm.description}
+                onChange={(e) => setCatForm({ ...catForm, description: e.target.value })}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                rows={2}
+                placeholder="Description optionnelle..."
+              />
+            </div>
+            {catError && <p className="text-sm text-red-600">{catError}</p>}
+            <div className="flex gap-2 pt-2">
+              <Button variant="secondary" className="flex-1 justify-center" onClick={() => { setCatModal(null); setSelectedCat(null); }}>Annuler</Button>
+              <Button className="flex-1 justify-center" loading={catModal === 'create' ? creatingCat : updatingCat} onClick={handleSaveCat}>
+                {catModal === 'create' ? 'Créer' : 'Enregistrer'}
               </Button>
             </div>
           </div>
