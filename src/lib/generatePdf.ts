@@ -37,16 +37,25 @@ export async function generatePdf(data: PdfData, entreprise: Entreprise): Promis
   const DARK: [number, number, number] = [17, 24, 39];
   const GRAY: [number, number, number] = [107, 114, 128];
 
+  // ── Logo (optional, top-left) ─────────────────────────────────
+  const yOff = entreprise.logo_url ? 14 : 0;
+  if (entreprise.logo_url) {
+    try {
+      const fmt = entreprise.logo_url.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(entreprise.logo_url, fmt, 14, 10, 40, 18);
+    } catch {}
+  }
+
   // ── Company header (left) ──────────────────────────────────────
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...GREEN);
-  doc.text(entreprise.nom, 14, 22);
+  doc.text(entreprise.nom, 14, 22 + yOff);
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...GRAY);
-  let y = 29;
+  let y = 29 + yOff;
   if (entreprise.ninea) { doc.text(`NINEA : ${entreprise.ninea}`, 14, y); y += 5; }
   if (entreprise.registre_commerce) { doc.text(`RC : ${entreprise.registre_commerce}`, 14, y); y += 5; }
   if (entreprise.adresse) { doc.text(entreprise.adresse, 14, y); y += 5; }
@@ -76,31 +85,31 @@ export async function generatePdf(data: PdfData, entreprise: Entreprise): Promis
   // ── Separator ─────────────────────────────────────────────────
   doc.setDrawColor(...GREEN);
   doc.setLineWidth(0.4);
-  doc.line(14, 54, 196, 54);
+  doc.line(14, 54 + yOff, 196, 54 + yOff);
 
   // ── Client block ──────────────────────────────────────────────
   const blockLabel = data.type === 'devis' ? 'DEVIS POUR' : 'FACTURÉ À';
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...GRAY);
-  doc.text(blockLabel, 14, 61);
+  doc.text(blockLabel, 14, 61 + yOff);
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...DARK);
-  doc.text(data.client?.nom ?? '—', 14, 67);
+  doc.text(data.client?.nom ?? '—', 14, 67 + yOff);
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...GRAY);
-  let yc = 73;
+  let yc = 73 + yOff;
   if (data.client?.adresse) { doc.text(data.client.adresse, 14, yc); yc += 5; }
   if (data.client?.telephone) { doc.text(`Tél : ${data.client.telephone}`, 14, yc); yc += 5; }
   if (data.client?.email) { doc.text(data.client.email, 14, yc); }
 
   // ── Lines table ───────────────────────────────────────────────
   autoTable(doc, {
-    startY: 88,
+    startY: 88 + yOff,
     head: [['Désignation', 'Qté', 'Prix unitaire HT', 'TVA', 'Total TTC']],
     body: (data.lignes ?? []).map((l) => [
       l.designation,

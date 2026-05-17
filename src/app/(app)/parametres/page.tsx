@@ -16,7 +16,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { BadgeRole } from '@/components/ui/Badge';
 import { formatTelephone, formatFCFA } from '@/lib/utils';
-import { Building2, Users, Save, Plus, Power, Landmark, Package, Pencil, Archive, ArchiveRestore, Tag, Trash2 } from 'lucide-react';
+import { Building2, Users, Save, Plus, Power, Landmark, Package, Pencil, Archive, ArchiveRestore, Tag, Trash2, Upload, X } from 'lucide-react';
 import type { Produit, CompteBancaire, Caisse, CategorieFrais } from '@/types';
 
 const ROLES = [
@@ -46,6 +46,9 @@ export default function ParametresPage() {
     nom: '', adresse: '', telephone: '', email: '', ninea: '', registre_commerce: '',
     tva_taux_defaut: '18', devise: 'FCFA',
   });
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoChanged, setLogoChanged] = useState(false);
+
   useEffect(() => {
     if (entreprise) {
       setEntrepriseForm({
@@ -58,13 +61,28 @@ export default function ParametresPage() {
         tva_taux_defaut: String(entreprise.tva_taux_defaut ?? 18),
         devise: entreprise.devise ?? 'FCFA',
       });
+      setLogoPreview(entreprise.logo_url ?? null);
+      setLogoChanged(false);
     }
   }, [entreprise]);
 
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+      setLogoChanged(true);
+    };
+    reader.readAsDataURL(file);
+  }
+
   function saveEntreprise() {
+    const payload: any = { ...entrepriseForm, tva_taux_defaut: parseFloat(entrepriseForm.tva_taux_defaut) };
+    if (logoChanged) payload.logo_url = logoPreview ?? null;
     updateEntreprise(
-      { ...entrepriseForm, tva_taux_defaut: parseFloat(entrepriseForm.tva_taux_defaut) },
-      { onSuccess: () => { setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 2500); } }
+      payload,
+      { onSuccess: () => { setSaveSuccess(true); setLogoChanged(false); setTimeout(() => setSaveSuccess(false), 2500); } }
     );
   }
 
@@ -316,6 +334,37 @@ export default function ParametresPage() {
                 <Input label="Taux TVA défaut (%)" type="number" value={entrepriseForm.tva_taux_defaut} onChange={(e) => setEntrepriseForm({ ...entrepriseForm, tva_taux_defaut: e.target.value })} />
                 <Input label="Devise" value={entrepriseForm.devise} onChange={(e) => setEntrepriseForm({ ...entrepriseForm, devise: e.target.value })} />
                 <Input label="Adresse" value={entrepriseForm.adresse} onChange={(e) => setEntrepriseForm({ ...entrepriseForm, adresse: e.target.value })} className="col-span-2" />
+                {/* Logo upload */}
+                <div className="col-span-2 border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+                  <div className="w-28 h-16 rounded-lg bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center overflow-hidden shrink-0">
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-1" />
+                    ) : (
+                      <span className="text-xs text-gray-400 text-center px-2">Aucun logo</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-medium text-gray-700">Logo de l&apos;entreprise</p>
+                    <p className="text-xs text-gray-400">PNG ou JPG recommandé. Affiché en en-tête des PDFs (factures &amp; devis).</p>
+                    <div className="flex gap-2 flex-wrap">
+                      <label className="cursor-pointer">
+                        <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" className="hidden" onChange={handleLogoChange} />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                          <Upload size={13} /> Choisir un fichier
+                        </span>
+                      </label>
+                      {logoPreview && (
+                        <button
+                          type="button"
+                          onClick={() => { setLogoPreview(null); setLogoChanged(true); }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors"
+                        >
+                          <X size={13} /> Supprimer
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="flex items-center gap-3 pt-2">
                 <Button onClick={saveEntreprise} loading={savingE}>
