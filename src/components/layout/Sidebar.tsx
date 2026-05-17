@@ -4,13 +4,14 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import {
   LayoutDashboard, Users, FileText, Wallet,
-  Building2, Receipt, BookOpen, Settings,
+  Building2, Receipt, BookOpen, Settings, ClipboardList,
 } from 'lucide-react';
 
 const NAV_MAIN = [
   { href: '/dashboard',      label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/clients',        label: 'Clients',          icon: Users },
   { href: '/fournisseurs',   label: 'Fournisseurs',     icon: Building2 },
+  { href: '/devis',          label: 'Devis',            icon: ClipboardList },
   { href: '/factures',       label: 'Factures',         icon: FileText },
   { href: '/tresorerie',     label: 'Trésorerie',       icon: Wallet },
   { href: '/frais-generaux', label: 'Frais généraux',   icon: Receipt },

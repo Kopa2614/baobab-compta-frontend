@@ -5,6 +5,13 @@ const STATUT_CONFIG = {
   impayee:   { label: 'Impayée',   classes: 'bg-orange-100 text-orange-800' },
   partielle: { label: 'Partielle', classes: 'bg-blue-100 text-blue-800' },
   annulee:   { label: 'Annulée',   classes: 'bg-gray-100 text-gray-500' },
+  // Devis statuts
+  brouillon: { label: 'Brouillon', classes: 'bg-gray-100 text-gray-600' },
+  envoye:    { label: 'Envoyé',    classes: 'bg-blue-100 text-blue-700' },
+  accepte:   { label: 'Accepté',   classes: 'bg-green-100 text-green-800' },
+  refuse:    { label: 'Refusé',    classes: 'bg-red-100 text-red-700' },
+  expire:    { label: 'Expiré',    classes: 'bg-orange-100 text-orange-700' },
+  converti:  { label: 'Converti',  classes: 'bg-purple-100 text-purple-700' },
 };
 
 export function BadgeStatut({ statut }: { statut: keyof typeof STATUT_CONFIG }) {

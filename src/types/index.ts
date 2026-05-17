@@ -199,6 +199,35 @@ export interface RapportMensuel {
   resultat_net: number;
 }
 
+export interface DevisLigne {
+  id?: string;
+  designation: string;
+  quantite: number;
+  prix_unitaire: number;
+  tva_taux: number;
+  montant_ht: number;
+  montant_tva: number;
+  montant_ttc: number;
+  ordre?: number;
+}
+
+export interface Devis {
+  id: string;
+  numero: string;
+  client?: Client;
+  client_id?: string;
+  date_emission: string;
+  date_validite?: string;
+  statut: 'brouillon' | 'envoye' | 'accepte' | 'refuse' | 'expire';
+  montant_ht: number;
+  tva_taux: number;
+  montant_tva: number;
+  montant_ttc: number;
+  notes?: string;
+  lignes?: DevisLigne[];
+  facture_id?: string;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   current_page: number;

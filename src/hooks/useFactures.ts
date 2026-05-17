@@ -49,6 +49,13 @@ export function useCreateFacture() {
   });
 }
 
+export function useSendFactureEmail() {
+  return useMutation({
+    mutationFn: ({ id, email, pdfBase64 }: { id: string; email: string; pdfBase64: string }) =>
+      api.post(`/factures/${id}/envoyer-email`, { email, pdf_base64: pdfBase64 }).then((r) => r.data),
+  });
+}
+
 export function useAnnulerFacture() {
   const queryClient = useQueryClient();
   return useMutation({

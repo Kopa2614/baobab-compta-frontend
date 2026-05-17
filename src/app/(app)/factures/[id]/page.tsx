@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useFacture, useAnnulerFacture } from '@/hooks/useFactures';
+import { useFacture, useAnnulerFacture, useSendFactureEmail } from '@/hooks/useFactures';
 import { useEnregistrerOperation } from '@/hooks/useTresorerie';
 import { useComptesBancaires, useCaisses } from '@/hooks/useTresorerie';
+import { useEntreprise } from '@/hooks/useEntreprise';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,51 +13,35 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { BadgeStatut } from '@/components/ui/Badge';
 import { formatFCFA, formatDate } from '@/lib/utils';
-import api from '@/lib/api';
+import { generatePdf, factureToPdfData } from '@/lib/generatePdf';
 import { ArrowLeft, Download, Ban, CreditCard, Mail, MessageCircle } from 'lucide-react';
 
 const MODES_PAIEMENT = [
   { value: 'especes', label: 'Espèces' },
   { value: 'cheque', label: 'Chèque' },
   { value: 'virement', label: 'Virement bancaire' },
-  { value: 'mobile_money', label: 'Mobile Money (Wave / OM)' },
-  { value: 'carte', label: 'Carte bancaire' },
+  { value: 'wave', label: 'Wave' },
+  { value: 'orange_money', label: 'Orange Money' },
+  { value: 'free_money', label: 'Free Money' },
+  { value: 'autre', label: 'Autre' },
 ];
 
 export default function FicheFacturePage() {
   const { id } = useParams<{ id: string }>();
   const { data: facture, isLoading } = useFacture(id);
+  const { data: entreprise } = useEntreprise();
   const { mutate: annuler, isPending: annulPending } = useAnnulerFacture();
   const { mutate: enregistrer, isPending: encaissPending } = useEnregistrerOperation();
+  const { mutate: sendEmail, isPending: emailPending } = useSendFactureEmail();
   const { data: comptes } = useComptesBancaires();
   const { data: caisses } = useCaisses();
 
   const [showEncaiss, setShowEncaiss] = useState(false);
-
-  function shareEmail() {
-    if (!facture) return;
-    const subject = encodeURIComponent(`Facture ${facture.numero}`);
-    const body = encodeURIComponent(
-      `Bonjour,\n\nVeuillez trouver ci-joint la facture ${facture.numero}` +
-      ` d'un montant de ${facture.montant_ttc.toLocaleString('fr-FR')} FCFA` +
-      (facture.date_echeance ? `, à régler avant le ${facture.date_echeance}.` : '.') +
-      `\n\nMerci.\n`
-    );
-    window.open(`mailto:?subject=${subject}&body=${body}`);
-  }
-
-  function shareWhatsApp() {
-    if (!facture) return;
-    const text = encodeURIComponent(
-      `*Facture ${facture.numero}*\n` +
-      `Client : ${facture.client?.nom ?? ''}\n` +
-      `Montant TTC : ${facture.montant_ttc.toLocaleString('fr-FR')} FCFA\n` +
-      (facture.montant_restant > 0 ? `Restant dû : ${facture.montant_restant.toLocaleString('fr-FR')} FCFA\n` : '') +
-      (facture.date_echeance ? `Échéance : ${facture.date_echeance}\n` : '')
-    );
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  }
   const [showAnnul, setShowAnnul] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailTo, setEmailTo] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailSuccess, setEmailSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const [encaissForm, setEncaissForm] = useState({
@@ -69,6 +54,84 @@ export default function FicheFacturePage() {
   });
   const [motif, setMotif] = useState('');
   const [formError, setFormError] = useState('');
+
+  async function getPdfBlob() {
+    if (!facture || !entreprise) throw new Error('Données manquantes');
+    return generatePdf(factureToPdfData(facture), entreprise);
+  }
+
+  async function downloadPdf() {
+    setDownloading(true);
+    try {
+      const blob = await getPdfBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `facture-${facture!.numero}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  function openEmailModal() {
+    setEmailTo(facture?.client?.email ?? '');
+    setEmailError('');
+    setEmailSuccess(false);
+    setShowEmailModal(true);
+  }
+
+  async function handleSendEmail() {
+    if (!emailTo.trim() || !emailTo.includes('@')) {
+      setEmailError('Adresse email invalide'); return;
+    }
+    setEmailError('');
+    const blob = await getPdfBlob();
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      sendEmail(
+        { id: facture!.id, email: emailTo, pdfBase64: base64 },
+        {
+          onSuccess: () => { setEmailSuccess(true); setTimeout(() => setShowEmailModal(false), 1500); },
+          onError: (e: any) => setEmailError(e.response?.data?.message ?? 'Erreur lors de l\'envoi'),
+        }
+      );
+    };
+  }
+
+  async function shareWhatsApp() {
+    if (!facture) return;
+    const text =
+      `*${facture.numero}*\n` +
+      `Client : ${facture.client?.nom ?? ''}\n` +
+      `Montant TTC : ${facture.montant_ttc.toLocaleString('fr-FR')} FCFA` +
+      (facture.montant_restant > 0 ? `\nRestant dû : ${facture.montant_restant.toLocaleString('fr-FR')} FCFA` : '') +
+      (facture.date_echeance ? `\nÉchéance : ${formatDate(facture.date_echeance)}` : '');
+
+    try {
+      const blob = await getPdfBlob();
+      const file = new File([blob], `facture-${facture.numero}.pdf`, { type: 'application/pdf' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text });
+        return;
+      }
+    } catch {}
+
+    // Fallback desktop: download + ouvrir WhatsApp
+    try {
+      const blob = await getPdfBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `facture-${facture.numero}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+    } catch {}
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
 
   function openEncaissement() {
     if (!facture) return;
@@ -130,22 +193,6 @@ export default function FicheFacturePage() {
     );
   }
 
-  async function downloadPdf() {
-    if (!facture) return;
-    setDownloading(true);
-    try {
-      const response = await api.get(`/factures/${facture.id}/pdf`, { responseType: 'blob' });
-      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `facture-${facture.numero}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setDownloading(false);
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -158,7 +205,6 @@ export default function FicheFacturePage() {
 
   const peutEncaisser = facture.statut !== 'payee' && facture.statut !== 'annulee';
   const peutAnnuler = facture.statut !== 'annulee';
-
   const compteOptions = (comptes ?? []).map((c) => ({ value: c.id, label: `${c.nom}${c.banque ? ` — ${c.banque}` : ''}` }));
   const caisseOptions = (caisses ?? []).map((c) => ({ value: c.id, label: c.nom }));
 
@@ -182,7 +228,7 @@ export default function FicheFacturePage() {
           <Button variant="secondary" size="sm" onClick={downloadPdf} loading={downloading}>
             <Download size={15} /> PDF
           </Button>
-          <Button variant="secondary" size="sm" onClick={shareEmail} title="Envoyer par email">
+          <Button variant="secondary" size="sm" onClick={openEmailModal} title="Envoyer par email">
             <Mail size={15} /> Email
           </Button>
           <Button variant="secondary" size="sm" onClick={shareWhatsApp} title="Partager sur WhatsApp">
@@ -225,7 +271,7 @@ export default function FicheFacturePage() {
         </Card>
       </div>
 
-      {/* Lignes de facture */}
+      {/* Lignes */}
       <Card>
         <div className="p-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Détail des prestations</h3>
@@ -252,8 +298,6 @@ export default function FicheFacturePage() {
             ))}
           </tbody>
         </table>
-
-        {/* Totaux */}
         <div className="p-4 border-t border-gray-100 flex justify-end">
           <div className="w-64 space-y-1 text-sm">
             <div className="flex justify-between text-gray-600">
@@ -286,6 +330,41 @@ export default function FicheFacturePage() {
         </Card>
       )}
 
+      {/* Modal Email */}
+      {showEmailModal && (
+        <Modal title={`Envoyer par email — ${facture.numero}`} onClose={() => setShowEmailModal(false)}>
+          <div className="space-y-4">
+            {emailSuccess ? (
+              <div className="bg-green-50 rounded-lg px-4 py-4 text-sm text-green-700 text-center font-medium">
+                Email envoyé avec le PDF en pièce jointe !
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500">
+                  Le PDF de la facture sera envoyé en pièce jointe à l'adresse ci-dessous.
+                </p>
+                <Input
+                  label="Adresse email du destinataire *"
+                  type="email"
+                  value={emailTo}
+                  onChange={(e) => setEmailTo(e.target.value)}
+                  placeholder="client@exemple.com"
+                />
+                {emailError && <p className="text-sm text-red-600">{emailError}</p>}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="secondary" className="flex-1 justify-center" onClick={() => setShowEmailModal(false)}>
+                    Annuler
+                  </Button>
+                  <Button className="flex-1 justify-center" loading={emailPending} onClick={handleSendEmail}>
+                    <Mail size={15} /> Envoyer
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Modal>
+      )}
+
       {/* Modal Encaissement */}
       {showEncaiss && (
         <Modal title={`Encaisser — ${facture.numero}`} onClose={() => setShowEncaiss(false)}>
@@ -293,7 +372,6 @@ export default function FicheFacturePage() {
             <div className="bg-orange-50 rounded-lg px-4 py-3 text-sm text-orange-700">
               Restant dû : <strong>{formatFCFA(facture.montant_restant)}</strong>
             </div>
-
             <Input
               label="Montant encaissé *"
               type="number"
@@ -301,7 +379,6 @@ export default function FicheFacturePage() {
               onChange={(e) => setEncaissForm({ ...encaissForm, montant: e.target.value })}
               placeholder="0"
             />
-
             <div className="grid grid-cols-2 gap-4">
               <Select
                 label="Source"
@@ -310,44 +387,25 @@ export default function FicheFacturePage() {
                 options={[{ value: 'banque', label: 'Banque' }, { value: 'caisse', label: 'Caisse' }]}
               />
               {encaissForm.source === 'banque' ? (
-                <Select
-                  label="Compte bancaire *"
-                  value={encaissForm.compte_bancaire_id}
+                <Select label="Compte bancaire *" value={encaissForm.compte_bancaire_id}
                   onChange={(e) => setEncaissForm({ ...encaissForm, compte_bancaire_id: e.target.value })}
-                  options={compteOptions}
-                  placeholder="Sélectionner..."
-                />
+                  options={compteOptions} placeholder="Sélectionner..." />
               ) : (
-                <Select
-                  label="Caisse *"
-                  value={encaissForm.caisse_id}
+                <Select label="Caisse *" value={encaissForm.caisse_id}
                   onChange={(e) => setEncaissForm({ ...encaissForm, caisse_id: e.target.value })}
-                  options={caisseOptions}
-                  placeholder="Sélectionner..."
-                />
+                  options={caisseOptions} placeholder="Sélectionner..." />
               )}
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Mode de paiement"
-                value={encaissForm.mode_paiement}
+              <Select label="Mode de paiement" value={encaissForm.mode_paiement}
                 onChange={(e) => setEncaissForm({ ...encaissForm, mode_paiement: e.target.value })}
-                options={MODES_PAIEMENT}
-              />
-              <Input
-                label="Date"
-                type="date"
-                value={encaissForm.date_operation}
-                onChange={(e) => setEncaissForm({ ...encaissForm, date_operation: e.target.value })}
-              />
+                options={MODES_PAIEMENT} />
+              <Input label="Date" type="date" value={encaissForm.date_operation}
+                onChange={(e) => setEncaissForm({ ...encaissForm, date_operation: e.target.value })} />
             </div>
-
             {formError && <p className="text-sm text-red-600">{formError}</p>}
             <div className="flex gap-2 pt-2">
-              <Button variant="secondary" className="flex-1 justify-center" onClick={() => setShowEncaiss(false)}>
-                Annuler
-              </Button>
+              <Button variant="secondary" className="flex-1 justify-center" onClick={() => setShowEncaiss(false)}>Annuler</Button>
               <Button className="flex-1 justify-center" loading={encaissPending} onClick={handleEncaissement}>
                 Confirmer l'encaissement
               </Button>
@@ -375,14 +433,9 @@ export default function FicheFacturePage() {
             </div>
             {formError && <p className="text-sm text-red-600">{formError}</p>}
             <div className="flex gap-2 pt-2">
-              <Button variant="secondary" className="flex-1 justify-center" onClick={() => setShowAnnul(false)}>
-                Retour
-              </Button>
-              <Button
-                className="flex-1 justify-center bg-red-600 hover:bg-red-700 focus:ring-red-500"
-                loading={annulPending}
-                onClick={handleAnnulation}
-              >
+              <Button variant="secondary" className="flex-1 justify-center" onClick={() => setShowAnnul(false)}>Retour</Button>
+              <Button className="flex-1 justify-center bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                loading={annulPending} onClick={handleAnnulation}>
                 Confirmer l'annulation
               </Button>
             </div>
