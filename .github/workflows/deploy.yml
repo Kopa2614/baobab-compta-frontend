@@ -20,6 +20,7 @@ jobs:
           script: |
             set -e
             export PATH=$PATH:/usr/local/bin:/usr/bin
+            git config --global --add safe.directory /var/www/baobab-compta-frontend
             cd /var/www/baobab-compta-frontend
 
             if [ ! -d ".git" ]; then
