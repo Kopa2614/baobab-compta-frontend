@@ -53,12 +53,12 @@ export default function ClientsPage() {
     if (modal === 'create') {
       createClient(form, {
         onSuccess: () => { setModal(null); setForm(FORM_VIDE); },
-        onError: () => setFormError('Erreur lors de la création'),
+        onError: (e: any) => setFormError(e.response?.data?.message ?? 'Erreur lors de la création'),
       });
     } else if (modal === 'edit' && selected) {
       updateClient({ id: selected.id, ...form }, {
         onSuccess: () => { setModal(null); setSelected(null); },
-        onError: () => setFormError('Erreur lors de la modification'),
+        onError: (e: any) => setFormError(e.response?.data?.message ?? 'Erreur lors de la modification'),
       });
     }
   }
