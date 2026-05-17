@@ -2,6 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type { PaginatedResponse, Devis } from '@/types';
 
+export function useSendDevisEmail() {
+  return useMutation({
+    mutationFn: ({ id, email, pdfBase64 }: { id: string; email: string; pdfBase64: string }) =>
+      api.post(`/devis/${id}/envoyer-email`, { email, pdf_base64: pdfBase64 }).then((r) => r.data),
+  });
+}
+
 export function useDevis(params: { page?: number; statut?: string; search?: string } = {}) {
   return useQuery<PaginatedResponse<Devis>>({
     queryKey: ['devis', params],

@@ -2,9 +2,8 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useDevisDetail, useUpdateDevisStatut, useConvertirDevis } from '@/hooks/useDevis';
+import { useDevisDetail, useUpdateDevisStatut, useConvertirDevis, useSendDevisEmail } from '@/hooks/useDevis';
 import { useEntreprise } from '@/hooks/useEntreprise';
-import { useSendFactureEmail } from '@/hooks/useFactures';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -21,7 +20,7 @@ export default function FicheDevisPage() {
   const { data: entreprise } = useEntreprise();
   const { mutate: updateStatut, isPending: statutPending } = useUpdateDevisStatut();
   const { mutate: convertir, isPending: convertPending } = useConvertirDevis();
-  const { mutate: sendEmail, isPending: emailPending } = useSendFactureEmail();
+  const { mutate: sendEmail, isPending: emailPending } = useSendDevisEmail();
 
   const [downloading, setDownloading] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
