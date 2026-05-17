@@ -201,8 +201,8 @@ export default function DashboardPage() {
           <div>
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{periodeLabel}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              <KpiCard title="CA encaissé"       value={formatFCFA(data?.ca_mois_courant ?? 0)} icon={TrendingUp}  color="bg-green-500"  subtitle="Factures payées" />
-              <KpiCard title="Factures émises"   value={String(data?.factures_emises ?? 0)}     icon={FileText}    color="bg-indigo-500" subtitle="Hors annulées" />
+              <KpiCard title="CA encaissé"       value={formatFCFA(data?.ca_mois_courant ?? 0)} icon={TrendingUp}  color="bg-green-600"  subtitle="Factures payées" />
+              <KpiCard title="Factures émises"   value={String(data?.factures_emises ?? 0)}     icon={FileText}    color="bg-gray-400"   subtitle="Hors annulées" />
               <KpiCard title="Impayées période"  value={formatFCFA(data?.factures_impayees ?? 0)} icon={AlertCircle} color={(data?.factures_impayees ?? 0) > 0 ? 'bg-orange-500' : 'bg-gray-400'} subtitle="Solde restant dû" />
               <KpiCard title="TVA à déclarer"    value={formatFCFA(data?.tva_a_payer ?? 0)}     icon={FileText}    color={(data?.tva_a_payer ?? 0) > 0 ? 'bg-amber-500' : 'bg-gray-400'} subtitle="Nette sur la période" />
             </div>
@@ -212,8 +212,8 @@ export default function DashboardPage() {
           <div>
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Situation actuelle</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <KpiCard title="Créances clients"     value={formatFCFA(data?.total_creances ?? 0)}    icon={Users}     color="bg-orange-500" subtitle="Soldes dus" />
-              <KpiCard title="Dettes fournisseurs"  value={formatFCFA(data?.total_dettes ?? 0)}      icon={Building2} color="bg-blue-500"   subtitle="À régler" />
+              <KpiCard title="Créances clients"     value={formatFCFA(data?.total_creances ?? 0)}    icon={Users}     color={(data?.total_creances ?? 0) > 0 ? 'bg-orange-500' : 'bg-gray-400'} subtitle="Soldes dus" />
+              <KpiCard title="Dettes fournisseurs"  value={formatFCFA(data?.total_dettes ?? 0)}      icon={Building2} color="bg-gray-400"   subtitle="À régler" />
               <KpiCard title="Solde trésorerie"     value={formatFCFA(data?.solde_tresorerie ?? 0)}  icon={Wallet}    color={(data?.solde_tresorerie ?? 0) >= 0 ? 'bg-green-600' : 'bg-red-500'} subtitle="Banques + caisses" />
             </div>
           </div>
