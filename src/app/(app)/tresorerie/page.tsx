@@ -10,9 +10,15 @@ import { Modal } from '@/components/ui/Modal';
 import { formatFCFA, formatDate } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Plus, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 
-const MODES = ['Espèces', 'Virement', 'Chèque', 'Wave', 'Orange Money', 'Free Money', 'Mobile Money'].map(
-  (m) => ({ value: m, label: m })
-);
+const MODES = [
+  { value: 'especes', label: 'Espèces' },
+  { value: 'virement', label: 'Virement' },
+  { value: 'cheque', label: 'Chèque' },
+  { value: 'wave', label: 'Wave' },
+  { value: 'orange_money', label: 'Orange Money' },
+  { value: 'free_money', label: 'Free Money' },
+  { value: 'autre', label: 'Autre' },
+];
 
 export default function TresoreeriePage() {
   const [source, setSource] = useState<'banque' | 'caisse'>('banque');
@@ -27,7 +33,7 @@ export default function TresoreeriePage() {
     date_operation: new Date().toISOString().slice(0, 10),
     description: '',
     montant: '',
-    mode_paiement: 'Wave',
+    mode_paiement: 'wave',
     facture_id: '',
   });
 
@@ -80,7 +86,7 @@ export default function TresoreeriePage() {
         setShowModal(false);
         setForm({ type_operation: 'entree', compte_bancaire_id: '', caisse_id: '',
           date_operation: new Date().toISOString().slice(0, 10), description: '', montant: '',
-          mode_paiement: 'Wave', facture_id: '' });
+          mode_paiement: 'wave', facture_id: '' });
       },
       onError: (e: any) => setFormError(e.response?.data?.message ?? 'Erreur'),
     });
