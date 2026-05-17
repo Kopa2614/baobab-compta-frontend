@@ -10,9 +10,15 @@ import { Modal } from '@/components/ui/Modal';
 import { formatFCFA, formatDate } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
-const MODES = ['Espèces', 'Virement', 'Chèque', 'Wave', 'Orange Money', 'Free Money'].map(
-  (m) => ({ value: m, label: m })
-);
+const MODES = [
+  { value: 'especes', label: 'Espèces' },
+  { value: 'virement', label: 'Virement' },
+  { value: 'cheque', label: 'Chèque' },
+  { value: 'wave', label: 'Wave' },
+  { value: 'orange_money', label: 'Orange Money' },
+  { value: 'free_money', label: 'Free Money' },
+  { value: 'autre', label: 'Autre' },
+];
 
 export default function FraisGenerauxPage() {
   const [page, setPage] = useState(1);
@@ -23,7 +29,7 @@ export default function FraisGenerauxPage() {
     date_frais: new Date().toISOString().slice(0, 10),
     description: '',
     montant: '',
-    mode_paiement: 'Virement',
+    mode_paiement: 'virement',
     source: 'banque' as 'banque' | 'caisse',
     compte_bancaire_id: '',
     caisse_id: '',
@@ -57,7 +63,7 @@ export default function FraisGenerauxPage() {
       onSuccess: () => {
         setShowModal(false);
         setForm({ categorie_id: '', date_frais: new Date().toISOString().slice(0, 10), description: '',
-          montant: '', mode_paiement: 'Virement', source: 'banque', compte_bancaire_id: '', caisse_id: '' });
+          montant: '', mode_paiement: 'virement', source: 'banque', compte_bancaire_id: '', caisse_id: '' });
       },
       onError: (e: any) => setFormError(e.response?.data?.message ?? 'Erreur'),
     });
