@@ -123,73 +123,84 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* En-tête + sélecteur période */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      {/* En-tête */}
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Tableau de bord</h2>
+      </div>
 
-        <div className="flex flex-col items-end gap-3">
-          <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
-            {(['mois', 'annee', 'intervalle'] as Mode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors
-                  ${mode === m ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                {m === 'mois' ? 'Mois' : m === 'annee' ? 'Année' : 'Intervalle'}
+      {/* Sélecteur période */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
+        {/* Tabs mode */}
+        <div className="flex bg-slate-100 rounded-lg p-1 gap-1">
+          {(['mois', 'annee', 'intervalle'] as Mode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors
+                ${mode === m ? 'bg-white shadow-sm text-gray-900' : 'text-slate-500 hover:text-gray-700'}`}
+            >
+              {m === 'mois' ? 'Mois' : m === 'annee' ? 'Année' : 'Intervalle'}
+            </button>
+          ))}
+        </div>
+
+        {/* Sélecteur mois */}
+        {mode === 'mois' && (
+          <div className="flex items-center gap-2">
+            <button onClick={moisPrecedent} className="p-2 rounded-lg border border-gray-200 hover:bg-slate-50 transition-colors">
+              <ChevronLeft size={16} className="text-gray-600" />
+            </button>
+            <div className="flex items-center gap-2 bg-slate-50 border border-gray-200 rounded-lg px-3 py-2">
+              <select value={mois} onChange={(e) => setMois(Number(e.target.value))} className="text-sm font-semibold text-gray-800 bg-transparent outline-none cursor-pointer">
+                {MOIS_LABELS.map((label, i) => <option key={i + 1} value={i + 1}>{label}</option>)}
+              </select>
+              <span className="text-gray-300">·</span>
+              <select value={annee} onChange={(e) => setAnnee(Number(e.target.value))} className="text-sm font-medium text-gray-600 bg-transparent outline-none cursor-pointer">
+                {ANNEES.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <button onClick={moisSuivant} className="p-2 rounded-lg border border-gray-200 hover:bg-slate-50 transition-colors">
+              <ChevronRight size={16} className="text-gray-600" />
+            </button>
+            {!estMoisCourant && (
+              <button onClick={() => { setMois(now.getMonth() + 1); setAnnee(now.getFullYear()); }}
+                className="text-xs text-teal-600 hover:text-teal-700 font-semibold px-2 py-1 rounded-lg hover:bg-teal-50 transition-colors">
+                Aujourd&apos;hui
               </button>
-            ))}
+            )}
           </div>
+        )}
 
-          {mode === 'mois' && (
-            <div className="flex items-center gap-2">
-              <button onClick={moisPrecedent} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                <ChevronLeft size={16} className="text-gray-600" />
-              </button>
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-                <select value={mois} onChange={(e) => setMois(Number(e.target.value))} className="text-sm font-medium text-gray-800 bg-transparent outline-none cursor-pointer">
-                  {MOIS_LABELS.map((label, i) => <option key={i + 1} value={i + 1}>{label}</option>)}
-                </select>
-                <select value={annee} onChange={(e) => setAnnee(Number(e.target.value))} className="text-sm font-medium text-gray-800 bg-transparent outline-none cursor-pointer">
-                  {ANNEES.map((a) => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
-              <button onClick={moisSuivant} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                <ChevronRight size={16} className="text-gray-600" />
-              </button>
-              {!estMoisCourant && (
-                <button onClick={() => { setMois(now.getMonth() + 1); setAnnee(now.getFullYear()); }} className="text-xs text-green-600 hover:underline font-medium px-1">
-                  Mois courant
-                </button>
-              )}
+        {/* Sélecteur année */}
+        {mode === 'annee' && (
+          <div className="flex items-center gap-2">
+            <button onClick={() => setAnneeMode((a) => a - 1)} className="p-2 rounded-lg border border-gray-200 hover:bg-slate-50 transition-colors">
+              <ChevronLeft size={16} className="text-gray-600" />
+            </button>
+            <div className="bg-slate-50 border border-gray-200 rounded-lg px-4 py-2">
+              <select value={anneeMode} onChange={(e) => setAnneeMode(Number(e.target.value))} className="text-sm font-semibold text-gray-800 bg-transparent outline-none cursor-pointer">
+                {ANNEES.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
             </div>
-          )}
+            <button onClick={() => setAnneeMode((a) => a + 1)} className="p-2 rounded-lg border border-gray-200 hover:bg-slate-50 transition-colors">
+              <ChevronRight size={16} className="text-gray-600" />
+            </button>
+          </div>
+        )}
 
-          {mode === 'annee' && (
-            <div className="flex items-center gap-2">
-              <button onClick={() => setAnneeMode((a) => a - 1)} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                <ChevronLeft size={16} className="text-gray-600" />
-              </button>
-              <div className="bg-white border border-gray-200 rounded-lg px-4 py-1.5">
-                <select value={anneeMode} onChange={(e) => setAnneeMode(Number(e.target.value))} className="text-sm font-medium text-gray-800 bg-transparent outline-none cursor-pointer">
-                  {ANNEES.map((a) => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
-              <button onClick={() => setAnneeMode((a) => a + 1)} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                <ChevronRight size={16} className="text-gray-600" />
-              </button>
-            </div>
-          )}
-
-          {mode === 'intervalle' && (
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-              <span className="text-xs text-gray-500">Du</span>
+        {/* Sélecteur intervalle */}
+        {mode === 'intervalle' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-slate-500 font-medium">Du</span>
+            <div className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-2">
               <input type="date" value={dateDebut} max={dateFin} onChange={(e) => setDateDebut(e.target.value)} className="text-sm text-gray-800 bg-transparent outline-none cursor-pointer" />
-              <span className="text-xs text-gray-400">au</span>
+            </div>
+            <span className="text-sm text-slate-400">au</span>
+            <div className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-2">
               <input type="date" value={dateFin} min={dateDebut} onChange={(e) => setDateFin(e.target.value)} className="text-sm text-gray-800 bg-transparent outline-none cursor-pointer" />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -200,22 +211,22 @@ export default function DashboardPage() {
         <>
           {/* KPIs période */}
           <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{periodeLabel}</p>
+            <p className="text-xs font-semibold text-slate-400 mb-3">{periodeLabel}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              <KpiCard title="CA encaissé"       value={formatFCFA(data?.ca_mois_courant ?? 0)} icon={TrendingUp}  color="bg-teal-500"   subtitle="Factures payées" />
-              <KpiCard title="Factures émises"   value={String(data?.factures_emises ?? 0)}     icon={FileText}    color="bg-slate-400"  subtitle="Hors annulées" />
-              <KpiCard title="Impayées période"  value={formatFCFA(data?.factures_impayees ?? 0)} icon={AlertCircle} color={(data?.factures_impayees ?? 0) > 0 ? 'bg-amber-500' : 'bg-slate-400'} subtitle="Solde restant dû" />
-              <KpiCard title="TVA à déclarer"    value={formatFCFA(data?.tva_a_payer ?? 0)}     icon={FileText}    color={(data?.tva_a_payer ?? 0) > 0 ? 'bg-indigo-400' : 'bg-slate-400'} subtitle="Nette sur la période" />
+              <KpiCard title="CA encaissé" value={formatFCFA(data?.ca_mois_courant ?? 0)} icon={TrendingUp} color="bg-teal-500" subtitle="Factures payées" hero />
+              <KpiCard title="Factures émises"   value={String(data?.factures_emises ?? 0)}       icon={FileText}    color="bg-slate-400"  subtitle="Hors annulées" />
+              <KpiCard title="Impayées période"  value={formatFCFA(data?.factures_impayees ?? 0)} icon={AlertCircle} color="bg-amber-500"   subtitle="Solde restant dû"    alert={(data?.factures_impayees ?? 0) > 0} />
+              <KpiCard title="TVA à déclarer"    value={formatFCFA(data?.tva_a_payer ?? 0)}       icon={FileText}    color={(data?.tva_a_payer ?? 0) > 0 ? 'bg-indigo-400' : 'bg-slate-400'} subtitle="Nette sur la période" />
             </div>
           </div>
 
           {/* KPIs permanents */}
           <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Situation actuelle</p>
+            <p className="text-xs font-semibold text-slate-400 mb-3">Situation actuelle</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <KpiCard title="Créances clients"     value={formatFCFA(data?.total_creances ?? 0)}    icon={Users}     color={(data?.total_creances ?? 0) > 0 ? 'bg-amber-500' : 'bg-slate-400'} subtitle="Soldes dus" />
-              <KpiCard title="Dettes fournisseurs"  value={formatFCFA(data?.total_dettes ?? 0)}      icon={Building2} color="bg-slate-400"  subtitle="À régler" />
-              <KpiCard title="Solde trésorerie"     value={formatFCFA(data?.solde_tresorerie ?? 0)}  icon={Wallet}    color={(data?.solde_tresorerie ?? 0) >= 0 ? 'bg-teal-500' : 'bg-rose-400'} subtitle="Banques + caisses" />
+              <KpiCard title="Créances clients"    value={formatFCFA(data?.total_creances ?? 0)}   icon={Users}     color="bg-amber-500"  subtitle="Soldes dus"       alert={(data?.total_creances ?? 0) > 0} />
+              <KpiCard title="Dettes fournisseurs" value={formatFCFA(data?.total_dettes ?? 0)}     icon={Building2} color="bg-slate-400"  subtitle="À régler" />
+              <KpiCard title="Solde trésorerie"    value={formatFCFA(data?.solde_tresorerie ?? 0)} icon={Wallet}    color={(data?.solde_tresorerie ?? 0) >= 0 ? 'bg-teal-500' : 'bg-rose-400'} subtitle="Banques + caisses" hero={(data?.solde_tresorerie ?? 0) >= 0} />
             </div>
           </div>
 
@@ -231,11 +242,11 @@ export default function DashboardPage() {
                   <AreaChart data={evolutionData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradCA" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#0d9488" stopOpacity={0.12} />
+                        <stop offset="5%"  stopColor="#0d9488" stopOpacity={0.20} />
                         <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="gradCharges" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#d97706" stopOpacity={0.10} />
+                        <stop offset="5%"  stopColor="#d97706" stopOpacity={0.06} />
                         <stop offset="95%" stopColor="#d97706" stopOpacity={0} />
                       </linearGradient>
                     </defs>
@@ -244,8 +255,8 @@ export default function DashboardPage() {
                     <YAxis tickFormatter={formatAxis} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={48} />
                     <Tooltip content={<TooltipFCFA />} />
                     <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8, color: '#64748b' }} />
-                    <Area type="monotone" dataKey="ca"      name="CA HT"    stroke="#0d9488" fill="url(#gradCA)"      strokeWidth={2} dot={false} />
-                    <Area type="monotone" dataKey="charges" name="Charges"  stroke="#d97706" fill="url(#gradCharges)" strokeWidth={2} dot={false} />
+                    <Area type="monotone" dataKey="ca"      name="CA HT"   stroke="#0d9488" fill="url(#gradCA)"      strokeWidth={3}   dot={false} />
+                    <Area type="monotone" dataKey="charges" name="Charges" stroke="#d97706" fill="url(#gradCharges)" strokeWidth={1.5} strokeDasharray="5 3" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
