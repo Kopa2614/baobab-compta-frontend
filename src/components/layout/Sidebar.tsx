@@ -28,13 +28,13 @@ export function Sidebar() {
         href={href}
         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group
           ${active
-            ? 'bg-green-50 text-green-700'
-            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+            ? 'bg-white/10 text-white'
+            : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-100'
           }`}
       >
         <Icon
           size={18}
-          className={active ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500'}
+          className={active ? 'text-green-400' : 'text-slate-500 group-hover:text-slate-300'}
         />
         {label}
       </Link>
@@ -42,9 +42,9 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-60 bg-[#fafaf9] border-r border-gray-200 min-h-screen flex flex-col shrink-0">
+    <aside className="w-60 bg-[#1a2230] min-h-screen flex flex-col shrink-0">
       {/* Logo */}
-      <div className="px-4 py-4 border-b border-gray-200 flex justify-center">
+      <div className="px-4 py-4 border-b border-white/[0.08] flex justify-center">
         <Image src="/logo.png" alt="Baobab Gestion" width={120} height={80} className="object-contain" />
       </div>
 
@@ -54,7 +54,7 @@ export function Sidebar() {
       </nav>
 
       {/* Paramètres en bas */}
-      <div className="px-3 py-3 border-t border-gray-200">
+      <div className="px-3 py-3 border-t border-white/[0.08]">
         <NavItem href="/parametres" label="Paramètres" icon={Settings} />
       </div>
     </aside>

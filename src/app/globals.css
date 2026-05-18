@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f8fafc;
   --foreground: #111827;
-  --sidebar-bg: #fafaf9;
-  --sidebar-border: #e5e7eb;
+  --sidebar-bg: #1a2230;
+  --sidebar-border: rgba(255,255,255,0.08);
   --brand: #16a34a;
   --brand-light: #f0fdf4;
 }

@@ -12,7 +12,7 @@ export function Header() {
     .slice(0, 2);
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between shrink-0">
+    <header className="bg-white border-b border-gray-100 px-6 h-14 flex items-center justify-between shrink-0">
       {/* Infos entreprise */}
       <div className="flex items-center gap-3">
         <p className="text-sm font-semibold text-gray-900">{entreprise?.nom ?? '—'}</p>
