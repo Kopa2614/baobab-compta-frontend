@@ -39,10 +39,10 @@ function formatAxis(v: number) {
 }
 
 const PIE_COLORS: Record<string, string> = {
-  payee:     '#16a34a',
-  impayee:   '#ea580c',
-  partielle: '#2563eb',
-  annulee:   '#9ca3af',
+  payee:     '#0d9488',  // teal-600  — vert sobre
+  impayee:   '#d97706',  // amber-600 — alerte douce
+  partielle: '#6366f1',  // indigo-500 — sobre
+  annulee:   '#94a3b8',  // slate-400 — neutre
 };
 const PIE_LABELS: Record<string, string> = {
   payee: 'Payées', impayee: 'Impayées', partielle: 'Partielles', annulee: 'Annulées',
@@ -51,10 +51,11 @@ const PIE_LABELS: Record<string, string> = {
 function TooltipFCFA({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div className="bg-white border border-gray-100 rounded-lg shadow-md px-3 py-2.5 text-xs">
+      <p className="font-semibold text-gray-600 mb-1.5">{label}</p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color }} className="font-medium">
+        <p key={p.name} className="font-medium flex items-center gap-1.5" style={{ color: p.color }}>
+          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: p.color }} />
           {p.name} : {formatFCFA(p.value)}
         </p>
       ))}
@@ -201,10 +202,10 @@ export default function DashboardPage() {
           <div>
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">{periodeLabel}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              <KpiCard title="CA encaissé"       value={formatFCFA(data?.ca_mois_courant ?? 0)} icon={TrendingUp}  color="bg-green-600"  subtitle="Factures payées" />
-              <KpiCard title="Factures émises"   value={String(data?.factures_emises ?? 0)}     icon={FileText}    color="bg-gray-400"   subtitle="Hors annulées" />
-              <KpiCard title="Impayées période"  value={formatFCFA(data?.factures_impayees ?? 0)} icon={AlertCircle} color={(data?.factures_impayees ?? 0) > 0 ? 'bg-orange-500' : 'bg-gray-400'} subtitle="Solde restant dû" />
-              <KpiCard title="TVA à déclarer"    value={formatFCFA(data?.tva_a_payer ?? 0)}     icon={FileText}    color={(data?.tva_a_payer ?? 0) > 0 ? 'bg-amber-500' : 'bg-gray-400'} subtitle="Nette sur la période" />
+              <KpiCard title="CA encaissé"       value={formatFCFA(data?.ca_mois_courant ?? 0)} icon={TrendingUp}  color="bg-teal-500"   subtitle="Factures payées" />
+              <KpiCard title="Factures émises"   value={String(data?.factures_emises ?? 0)}     icon={FileText}    color="bg-slate-400"  subtitle="Hors annulées" />
+              <KpiCard title="Impayées période"  value={formatFCFA(data?.factures_impayees ?? 0)} icon={AlertCircle} color={(data?.factures_impayees ?? 0) > 0 ? 'bg-amber-500' : 'bg-slate-400'} subtitle="Solde restant dû" />
+              <KpiCard title="TVA à déclarer"    value={formatFCFA(data?.tva_a_payer ?? 0)}     icon={FileText}    color={(data?.tva_a_payer ?? 0) > 0 ? 'bg-indigo-400' : 'bg-slate-400'} subtitle="Nette sur la période" />
             </div>
           </div>
 
@@ -212,9 +213,9 @@ export default function DashboardPage() {
           <div>
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Situation actuelle</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <KpiCard title="Créances clients"     value={formatFCFA(data?.total_creances ?? 0)}    icon={Users}     color={(data?.total_creances ?? 0) > 0 ? 'bg-orange-500' : 'bg-gray-400'} subtitle="Soldes dus" />
-              <KpiCard title="Dettes fournisseurs"  value={formatFCFA(data?.total_dettes ?? 0)}      icon={Building2} color="bg-gray-400"   subtitle="À régler" />
-              <KpiCard title="Solde trésorerie"     value={formatFCFA(data?.solde_tresorerie ?? 0)}  icon={Wallet}    color={(data?.solde_tresorerie ?? 0) >= 0 ? 'bg-green-600' : 'bg-red-500'} subtitle="Banques + caisses" />
+              <KpiCard title="Créances clients"     value={formatFCFA(data?.total_creances ?? 0)}    icon={Users}     color={(data?.total_creances ?? 0) > 0 ? 'bg-amber-500' : 'bg-slate-400'} subtitle="Soldes dus" />
+              <KpiCard title="Dettes fournisseurs"  value={formatFCFA(data?.total_dettes ?? 0)}      icon={Building2} color="bg-slate-400"  subtitle="À régler" />
+              <KpiCard title="Solde trésorerie"     value={formatFCFA(data?.solde_tresorerie ?? 0)}  icon={Wallet}    color={(data?.solde_tresorerie ?? 0) >= 0 ? 'bg-teal-500' : 'bg-rose-400'} subtitle="Banques + caisses" />
             </div>
           </div>
 
@@ -230,21 +231,21 @@ export default function DashboardPage() {
                   <AreaChart data={evolutionData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradCA" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#16a34a" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                        <stop offset="5%"  stopColor="#0d9488" stopOpacity={0.12} />
+                        <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="gradCharges" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#ef4444" stopOpacity={0.12} />
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                        <stop offset="5%"  stopColor="#d97706" stopOpacity={0.10} />
+                        <stop offset="95%" stopColor="#d97706" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tickFormatter={formatAxis} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={48} />
                     <Tooltip content={<TooltipFCFA />} />
-                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-                    <Area type="monotone" dataKey="ca"      name="CA HT"    stroke="#16a34a" fill="url(#gradCA)"      strokeWidth={2} dot={false} />
-                    <Area type="monotone" dataKey="charges" name="Charges"  stroke="#ef4444" fill="url(#gradCharges)" strokeWidth={2} dot={false} />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8, color: '#64748b' }} />
+                    <Area type="monotone" dataKey="ca"      name="CA HT"    stroke="#0d9488" fill="url(#gradCA)"      strokeWidth={2} dot={false} />
+                    <Area type="monotone" dataKey="charges" name="Charges"  stroke="#d97706" fill="url(#gradCharges)" strokeWidth={2} dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -321,7 +322,7 @@ export default function DashboardPage() {
                       <td className="p-4 text-gray-500">{formatDate(op.date_operation)}</td>
                       <td className="p-4">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          op.type_operation === 'entree' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          op.type_operation === 'entree' ? 'bg-teal-50 text-teal-700' : 'bg-amber-50 text-amber-700'
                         }`}>
                           {op.type_operation === 'entree' ? 'Entrée' : 'Sortie'}
                         </span>
@@ -331,7 +332,7 @@ export default function DashboardPage() {
                         {op.facture && <span className="ml-2 text-xs text-gray-400">({op.facture.numero})</span>}
                       </td>
                       <td className={`p-4 text-right font-medium ${
-                        op.type_operation === 'entree' ? 'text-green-600' : 'text-red-600'
+                        op.type_operation === 'entree' ? 'text-teal-600' : 'text-amber-600'
                       }`}>
                         {op.type_operation === 'entree' ? '+' : '-'}{formatFCFA(op.montant)}
                       </td>
