@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useEntreprise, useUpdateEntreprise } from '@/hooks/useEntreprise';
-import { useUtilisateurs, useCreateUtilisateur, useToggleUtilisateur } from '@/hooks/useUtilisateurs';
+import { useUtilisateurs, useCreateUtilisateur, useToggleUtilisateur, useChangePassword, useResetUserPassword } from '@/hooks/useUtilisateurs';
+import { useAuth } from '@/hooks/useAuth';
 import {
   useComptesBancaires, useCaisses,
   useCreateCompteBancaire, useUpdateCompteBancaire, useToggleCompteBancaire,
@@ -16,7 +17,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { BadgeRole } from '@/components/ui/Badge';
 import { formatTelephone, formatFCFA } from '@/lib/utils';
-import { Building2, Users, Save, Plus, Power, Landmark, Package, Pencil, Archive, ArchiveRestore, Tag, Trash2, Upload, X } from 'lucide-react';
+import { Building2, Users, Save, Plus, Power, Landmark, Package, Pencil, Archive, ArchiveRestore, Tag, Trash2, Upload, X, UserCircle, KeyRound } from 'lucide-react';
 import type { Produit, CompteBancaire, Caisse, CategorieFrais } from '@/types';
 
 const ROLES = [
@@ -25,19 +26,68 @@ const ROLES = [
   { value: 'comptable', label: 'Comptable' },
 ];
 
-type Tab = 'entreprise' | 'comptes' | 'produits' | 'categories' | 'utilisateurs';
+type Tab = 'entreprise' | 'comptes' | 'produits' | 'categories' | 'utilisateurs' | 'profil';
 
 const TABS: { key: Tab; label: string; Icon: React.ElementType }[] = [
-  { key: 'entreprise', label: 'Entreprise', Icon: Building2 },
-  { key: 'comptes', label: 'Comptes & Caisses', Icon: Landmark },
-  { key: 'produits', label: 'Produits / Services', Icon: Package },
-  { key: 'categories', label: 'Catégories de frais', Icon: Tag },
-  { key: 'utilisateurs', label: 'Utilisateurs', Icon: Users },
+  { key: 'profil',       label: 'Mon profil',         Icon: UserCircle },
+  { key: 'entreprise',   label: 'Entreprise',          Icon: Building2 },
+  { key: 'comptes',      label: 'Comptes & Caisses',   Icon: Landmark },
+  { key: 'produits',     label: 'Produits / Services', Icon: Package },
+  { key: 'categories',   label: 'Catégories de frais', Icon: Tag },
+  { key: 'utilisateurs', label: 'Utilisateurs',        Icon: Users },
 ];
 
 export default function ParametresPage() {
-  const [tab, setTab] = useState<Tab>('entreprise');
+  const [tab, setTab] = useState<Tab>('profil');
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // ── Mon profil / Mot de passe ──
+  const { utilisateur } = useAuth();
+  const { mutate: changePassword, isPending: changingPwd } = useChangePassword();
+  const { mutate: resetUserPassword, isPending: resettingPwd } = useResetUserPassword();
+  const [pwdForm, setPwdForm] = useState({ ancien: '', nouveau: '', confirmer: '' });
+  const [pwdError, setPwdError] = useState('');
+  const [pwdSuccess, setPwdSuccess] = useState(false);
+  const [resetModal, setResetModal] = useState<string | null>(null);
+  const [resetPwd, setResetPwd] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  function handleChangePwd() {
+    if (!pwdForm.ancien || !pwdForm.nouveau || pwdForm.nouveau.length < 8) {
+      setPwdError('Ancien mot de passe et nouveau (8 caractères min.) obligatoires'); return;
+    }
+    if (pwdForm.nouveau !== pwdForm.confirmer) {
+      setPwdError('Les mots de passe ne correspondent pas'); return;
+    }
+    setPwdError('');
+    changePassword(
+      { ancien: pwdForm.ancien, nouveau: pwdForm.nouveau },
+      {
+        onSuccess: () => {
+          setPwdSuccess(true);
+          setPwdForm({ ancien: '', nouveau: '', confirmer: '' });
+          setTimeout(() => setPwdSuccess(false), 3000);
+        },
+        onError: (e: any) => setPwdError(e.response?.data?.message ?? 'Mot de passe actuel incorrect'),
+      }
+    );
+  }
+
+  function handleResetPwd() {
+    if (!resetPwd || resetPwd.length < 8) { setResetError('8 caractères minimum'); return; }
+    setResetError('');
+    resetUserPassword(
+      { id: resetModal!, password: resetPwd },
+      {
+        onSuccess: () => {
+          setResetSuccess(true);
+          setTimeout(() => { setResetModal(null); setResetPwd(''); setResetSuccess(false); }, 1500);
+        },
+        onError: (e: any) => setResetError(e.response?.data?.message ?? 'Erreur'),
+      }
+    );
+  }
 
   // ── Entreprise ──
   const { data: entreprise, isLoading: loadingE } = useEntreprise();
@@ -315,6 +365,48 @@ export default function ParametresPage() {
           </button>
         ))}
       </div>
+
+      {/* ── Onglet Mon profil ── */}
+      {tab === 'profil' && (
+        <div className="space-y-4 max-w-lg">
+          {/* Infos */}
+          <Card className="p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
+                <span className="text-xl font-bold text-teal-600">
+                  {[utilisateur?.prenom, utilisateur?.nom].filter(Boolean).map(n => n![0].toUpperCase()).join('').slice(0,2) || '?'}
+                </span>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{utilisateur?.prenom} {utilisateur?.nom}</p>
+                <p className="text-sm text-slate-400">{utilisateur?.email}</p>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-5">
+              <div className="flex items-center gap-2 mb-4">
+                <KeyRound size={16} className="text-slate-400" />
+                <p className="font-semibold text-gray-900 text-sm">Changer mon mot de passe</p>
+              </div>
+              <div className="space-y-3">
+                <Input label="Mot de passe actuel *" type="password" value={pwdForm.ancien}
+                  onChange={(e) => setPwdForm({ ...pwdForm, ancien: e.target.value })} placeholder="••••••••" />
+                <Input label="Nouveau mot de passe *" type="password" value={pwdForm.nouveau}
+                  onChange={(e) => setPwdForm({ ...pwdForm, nouveau: e.target.value })} placeholder="8 caractères minimum" />
+                <Input label="Confirmer le nouveau mot de passe *" type="password" value={pwdForm.confirmer}
+                  onChange={(e) => setPwdForm({ ...pwdForm, confirmer: e.target.value })} placeholder="••••••••" />
+                {pwdError && <p className="text-sm text-red-600">{pwdError}</p>}
+                {pwdSuccess && <p className="text-sm text-teal-600 font-medium">✓ Mot de passe modifié avec succès</p>}
+                <div className="pt-1">
+                  <Button loading={changingPwd} onClick={handleChangePwd}>
+                    <KeyRound size={15} /> Modifier le mot de passe
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* ── Onglet Entreprise ── */}
       {tab === 'entreprise' && (
@@ -624,6 +716,7 @@ export default function ParametresPage() {
                     <th className="text-left p-4 font-medium text-gray-500">Téléphone</th>
                     <th className="text-left p-4 font-medium text-gray-500">Rôle</th>
                     <th className="text-center p-4 font-medium text-gray-500">Statut</th>
+                    <th className="text-center p-4 font-medium text-gray-500">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -640,6 +733,14 @@ export default function ParametresPage() {
                             ${u.actif ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                         >
                           <Power size={11} /> {u.actif ? 'Actif' : 'Inactif'}
+                        </button>
+                      </td>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => { setResetModal(u.id); setResetPwd(''); setResetError(''); setResetSuccess(false); }}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors border border-gray-200 hover:border-amber-200"
+                        >
+                          <KeyRound size={11} /> MDP
                         </button>
                       </td>
                     </tr>
@@ -753,6 +854,31 @@ export default function ParametresPage() {
                 {catModal === 'create' ? 'Créer' : 'Enregistrer'}
               </Button>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {resetModal && (
+        <Modal title="Réinitialiser le mot de passe" onClose={() => setResetModal(null)}>
+          <div className="space-y-4">
+            {resetSuccess ? (
+              <div className="bg-teal-50 rounded-lg px-4 py-4 text-sm text-teal-700 text-center font-medium">
+                ✓ Mot de passe réinitialisé avec succès
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-slate-500">Le mot de passe sera immédiatement modifié pour cet utilisateur.</p>
+                <Input label="Nouveau mot de passe *" type="password" value={resetPwd}
+                  onChange={(e) => setResetPwd(e.target.value)} placeholder="8 caractères minimum" />
+                {resetError && <p className="text-sm text-red-600">{resetError}</p>}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="secondary" className="flex-1 justify-center" onClick={() => setResetModal(null)}>Annuler</Button>
+                  <Button className="flex-1 justify-center" loading={resettingPwd} onClick={handleResetPwd}>
+                    <KeyRound size={15} /> Confirmer
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </Modal>
       )}

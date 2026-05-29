@@ -32,3 +32,17 @@ export function useToggleUtilisateur() {
     },
   });
 }
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: ({ ancien, nouveau }: { ancien: string; nouveau: string }) =>
+      api.put('/profile/password', { ancien_mot_de_passe: ancien, nouveau_mot_de_passe: nouveau }).then((r) => r.data),
+  });
+}
+
+export function useResetUserPassword() {
+  return useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) =>
+      api.patch(`/utilisateurs/${id}/password`, { password }).then((r) => r.data),
+  });
+}
