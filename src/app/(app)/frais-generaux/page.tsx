@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useFrais, useFraisCategories, useCreateFrais } from '@/hooks/useFrais';
 import { useComptesBancaires, useCaisses } from '@/hooks/useTresorerie';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
@@ -50,64 +49,61 @@ export default function FraisGenerauxPage() {
       setFormError('Catégorie, description et montant sont obligatoires'); return;
     }
     setFormError('');
-    const payload = {
-      categorie_id: form.categorie_id,
-      date_frais: form.date_frais,
-      description: form.description,
-      montant: parseFloat(form.montant),
-      mode_paiement: form.mode_paiement,
+    createFrais({
+      categorie_id: form.categorie_id, date_frais: form.date_frais, description: form.description,
+      montant: parseFloat(form.montant), mode_paiement: form.mode_paiement,
       compte_bancaire_id: form.source === 'banque' ? form.compte_bancaire_id || undefined : undefined,
       caisse_id: form.source === 'caisse' ? form.caisse_id || undefined : undefined,
-    };
-    createFrais(payload, {
+    }, {
       onSuccess: () => {
         setShowModal(false);
-        setForm({ categorie_id: '', date_frais: new Date().toISOString().slice(0, 10), description: '',
-          montant: '', mode_paiement: 'virement', source: 'banque', compte_bancaire_id: '', caisse_id: '' });
+        setForm({ categorie_id: '', date_frais: new Date().toISOString().slice(0, 10), description: '', montant: '', mode_paiement: 'virement', source: 'banque', compte_bancaire_id: '', caisse_id: '' });
       },
       onError: (e: any) => setFormError(e.response?.data?.message ?? 'Erreur'),
     });
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Frais généraux</h2>
-        <Button onClick={() => setShowModal(true)} size="sm"><Plus size={16} /> Enregistrer un frais</Button>
+        <h1 className="text-2xl font-bold text-gray-900">Frais généraux</h1>
+        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-[#1B3A2D] text-white text-sm font-medium rounded-xl hover:bg-[#162E22] transition-colors">
+          <Plus size={16} /> Enregistrer un frais
+        </button>
       </div>
 
       <Card>
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="w-6 h-6 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-[#1B3A2D] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left p-4 font-medium text-gray-500">Date</th>
-                <th className="text-left p-4 font-medium text-gray-500">Catégorie</th>
-                <th className="text-left p-4 font-medium text-gray-500">Description</th>
-                <th className="text-left p-4 font-medium text-gray-500">Mode</th>
-                <th className="text-right p-4 font-medium text-gray-500">Montant</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-400">Date</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-400">Catégorie</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-400">Description</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-400">Mode</th>
+                <th className="text-right px-5 py-3 font-medium text-gray-400">Montant</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {data?.data.map((f) => (
-                <tr key={f.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="p-4 text-gray-500 text-xs">{formatDate(f.date_frais)}</td>
-                  <td className="p-4">
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                <tr key={f.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-5 py-3.5 text-gray-400 text-xs">{formatDate(f.date_frais)}</td>
+                  <td className="px-5 py-3.5">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#1B3A2D]/10 text-[#1B3A2D]">
                       {f.categorie?.nom ?? '—'}
                     </span>
                   </td>
-                  <td className="p-4 text-gray-700">{f.description}</td>
-                  <td className="p-4 text-gray-500 text-xs">{f.mode_paiement}</td>
-                  <td className="p-4 text-right font-medium text-red-600">{formatFCFA(f.montant)}</td>
+                  <td className="px-5 py-3.5 text-gray-700">{f.description}</td>
+                  <td className="px-5 py-3.5 text-gray-400 text-xs">{f.mode_paiement}</td>
+                  <td className="px-5 py-3.5 text-right font-semibold text-red-500">{formatFCFA(f.montant)}</td>
                 </tr>
               ))}
               {!data?.data.length && (
-                <tr><td colSpan={5} className="p-8 text-center text-gray-400">Aucun frais enregistré</td></tr>
+                <tr><td colSpan={5} className="px-5 py-12 text-center text-gray-400">Aucun frais enregistré</td></tr>
               )}
             </tbody>
           </table>
@@ -118,9 +114,9 @@ export default function FraisGenerauxPage() {
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>{data.total} frais</span>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={16} /></Button>
-            <span>Page {page} / {data.last_page}</span>
-            <Button variant="ghost" size="sm" disabled={page === data.last_page} onClick={() => setPage((p) => p + 1)}><ChevronRight size={16} /></Button>
+            <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"><ChevronLeft size={15} /></button>
+            <span className="text-xs">Page {page} / {data.last_page}</span>
+            <button disabled={page === data.last_page} onClick={() => setPage((p) => p + 1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"><ChevronRight size={15} /></button>
           </div>
         </div>
       )}
@@ -137,12 +133,12 @@ export default function FraisGenerauxPage() {
             <Select label="Mode de paiement" value={form.mode_paiement} onChange={(e) => setForm({ ...form, mode_paiement: e.target.value })} options={MODES} />
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Compte débité</label>
-              <div className="flex gap-2 mb-2">
+              <label className="text-sm font-medium text-gray-700 block mb-2">Compte débité</label>
+              <div className="flex gap-2 mb-3">
                 {(['banque', 'caisse'] as const).map((s) => (
                   <button key={s} onClick={() => setForm({ ...form, source: s })}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors
-                      ${form.source === s ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500'}`}>
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors
+                      ${form.source === s ? 'border-[#1B3A2D] bg-[#1B3A2D]/5 text-[#1B3A2D]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
                     {s === 'banque' ? 'Banque' : 'Caisse'}
                   </button>
                 ))}
@@ -153,9 +149,11 @@ export default function FraisGenerauxPage() {
             </div>
 
             {formError && <p className="text-sm text-red-600">{formError}</p>}
-            <div className="flex gap-2 pt-2">
-              <Button variant="secondary" className="flex-1 justify-center" onClick={() => setShowModal(false)}>Annuler</Button>
-              <Button className="flex-1 justify-center" loading={isPending} onClick={handleSubmit}>Enregistrer</Button>
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Annuler</button>
+              <button onClick={handleSubmit} disabled={isPending} className="flex-1 py-3 rounded-xl bg-[#1B3A2D] text-white text-sm font-medium hover:bg-[#162E22] transition-colors disabled:opacity-60">
+                {isPending ? 'Enregistrement...' : 'Enregistrer'}
+              </button>
             </div>
           </div>
         </Modal>
