@@ -4,12 +4,8 @@ import { useCreateFacture } from '@/hooks/useFactures';
 import { useAllClients } from '@/hooks/useClients';
 import { useAllProduits } from '@/hooks/useProduits';
 import { useEntreprise } from '@/hooks/useEntreprise';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { formatFCFA } from '@/lib/utils';
-import { Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, X } from 'lucide-react';
 import type { FactureLigne, Produit } from '@/types';
 
 type LigneForm = Omit<FactureLigne, 'id' | 'montant_ht' | 'montant_tva' | 'montant_ttc' | 'ordre'>;
@@ -116,8 +112,6 @@ export function CreateFactureModal({ onClose, defaultClientId }: Props) {
   const [formError, setFormError] = useState('');
   const [openCatalogue, setOpenCatalogue] = useState<number | null>(null);
 
-  const clientOptions = (clients ?? []).map((c) => ({ value: c.id, label: c.nom }));
-
   const totaux = useMemo(() => {
     return lignes.reduce(
       (acc, l) => {
@@ -160,143 +154,140 @@ export function CreateFactureModal({ onClose, defaultClientId }: Props) {
   }
 
   return (
-    <Modal title="Nouvelle facture" onClose={onClose} size="lg">
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Select
-            label="Client *"
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            options={clientOptions}
-            placeholder="Sélectionner un client..."
-            className="col-span-2"
-          />
-          <Input label="Date d'émission" type="date" value={dateEmission} onChange={(e) => setDateEmission(e.target.value)} />
-          <Input label="Date d'échéance" type="date" value={dateEcheance} onChange={(e) => setDateEcheance(e.target.value)} />
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative bg-white w-[520px] h-full flex flex-col shadow-2xl">
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
+        <h2 className="text-lg font-bold text-gray-900">Ajouter une facture</h2>
+        <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+
+        {/* Client */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Client <span className="text-red-500">*</span></label>
+          <div className="relative">
+            <select value={clientId} onChange={(e) => setClientId(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 bg-white outline-none focus:border-[#1B3A2D] appearance-none cursor-pointer">
+              <option value="">Sélectionner un client</option>
+              {(clients ?? []).map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+            </select>
+            <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
-        {/* Lignes de facture */}
+        {/* Date */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium text-gray-700">Lignes de facture</label>
-            <Button variant="ghost" size="sm" onClick={() => setLignes((p) => [...p, { ...LIGNE_VIDE, tva_taux: tvaTaux }])}>
-              <Plus size={14} /> Ajouter une ligne
-            </Button>
-          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Date d&apos;émission <span className="text-red-500">*</span></label>
+          <input type="date" value={dateEmission} onChange={(e) => setDateEmission(e.target.value)}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 bg-white outline-none focus:border-[#1B3A2D] cursor-pointer" />
+        </div>
 
-          {/* En-têtes colonnes */}
-          <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 px-1 mb-1">
-            <span className="col-span-5">Désignation</span>
-            <span className="col-span-2 text-right">Qté</span>
-            <span className="col-span-2 text-right">Prix HT</span>
-            <span className="col-span-1 text-right">TVA%</span>
-            <span className="col-span-1 text-right">TTC</span>
+        {/* Articles */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-3">Articles / Prestations</p>
+          <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 px-1 mb-2">
+            <span className="col-span-6">Désignation</span>
+            <span className="col-span-2 text-center">Qté</span>
+            <span className="col-span-2 text-right">Prix unit.</span>
+            <span className="col-span-1 text-right">Total</span>
             <span className="col-span-1" />
           </div>
-
           <div className="space-y-2">
             {lignes.map((ligne, i) => {
-              const ttc = ligne.quantite * ligne.prix_unitaire * (1 + ligne.tva_taux / 100);
+              const total = ligne.quantite * ligne.prix_unitaire;
               return (
                 <div key={i} className="grid grid-cols-12 gap-2 items-center">
-
-                  {/* Désignation + bouton catalogue */}
-                  <div className="col-span-5 flex gap-1 items-center relative">
-                    <div className="relative shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setOpenCatalogue(openCatalogue === i ? null : i)}
-                        className="flex items-center gap-0.5 px-2 py-1.5 text-xs font-medium rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 transition-colors whitespace-nowrap"
-                      >
-                        Catalogue <ChevronDown size={11} />
-                      </button>
-                      {openCatalogue === i && (
-                        <CatalogueDropdown
-                          produits={produits ?? []}
-                          onPick={(p) => pickProduit(i, p)}
-                          onClose={() => setOpenCatalogue(null)}
-                        />
-                      )}
-                    </div>
+                  <div className="col-span-6 flex gap-1.5 items-center relative">
                     <input
-                      className="flex-1 min-w-0 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Saisie libre..."
+                      className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B3A2D]"
+                      placeholder="Désignation..."
                       value={ligne.designation}
                       onChange={(e) => updateLigne(i, 'designation', e.target.value)}
                     />
+                    <div className="relative shrink-0">
+                      <button type="button" onClick={() => setOpenCatalogue(openCatalogue === i ? null : i)}
+                        className="flex items-center px-2 py-2 text-xs rounded-lg border border-gray-200 text-gray-500 hover:border-[#1B3A2D] hover:text-[#1B3A2D] transition-colors">
+                        <ChevronDown size={11} />
+                      </button>
+                      {openCatalogue === i && (
+                        <CatalogueDropdown produits={produits ?? []} onPick={(p) => pickProduit(i, p)} onClose={() => setOpenCatalogue(null)} />
+                      )}
+                    </div>
                   </div>
-
-                  <input
-                    type="number"
-                    className="col-span-2 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={ligne.quantite}
-                    min={1}
+                  <input type="number" min={1} value={ligne.quantite}
                     onChange={(e) => updateLigne(i, 'quantite', parseFloat(e.target.value) || 1)}
-                  />
-                  <input
-                    type="number"
-                    className="col-span-2 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="0"
-                    value={ligne.prix_unitaire || ''}
-                    min={0}
+                    className="col-span-2 border border-gray-200 rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:border-[#1B3A2D]" />
+                  <input type="number" min={0} placeholder="0" value={ligne.prix_unitaire || ''}
                     onChange={(e) => updateLigne(i, 'prix_unitaire', parseFloat(e.target.value) || 0)}
-                  />
-                  <input
-                    type="number"
-                    className="col-span-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={ligne.tva_taux}
-                    min={0}
-                    onChange={(e) => updateLigne(i, 'tva_taux', parseFloat(e.target.value) || 0)}
-                  />
-                  <span className="col-span-1 text-right text-xs text-gray-600 font-medium tabular-nums">
-                    {formatFCFA(ttc)}
+                    className="col-span-2 border border-gray-200 rounded-lg px-2 py-2 text-sm text-right focus:outline-none focus:border-[#1B3A2D]" />
+                  <span className="col-span-1 text-right text-sm font-semibold text-gray-800 tabular-nums">
+                    {total.toLocaleString('fr-FR')}
                   </span>
-                  <button
-                    onClick={() => setLignes((p) => p.filter((_, idx) => idx !== i))}
-                    disabled={lignes.length === 1}
-                    className="col-span-1 flex justify-center text-gray-300 hover:text-red-500 disabled:opacity-30 transition-colors"
-                  >
+                  <button onClick={() => setLignes((p) => p.filter((_, idx) => idx !== i))} disabled={lignes.length === 1}
+                    className="col-span-1 flex justify-center text-gray-300 hover:text-red-500 disabled:opacity-30 transition-colors">
                     <Trash2 size={15} />
                   </button>
                 </div>
               );
             })}
           </div>
+          <button type="button" onClick={() => setLignes((p) => [...p, { ...LIGNE_VIDE, tva_taux: tvaTaux }])}
+            className="mt-3 flex items-center gap-1.5 text-sm text-[#1B3A2D] font-medium hover:underline">
+            <Plus size={14} /> Ajouter une ligne
+          </button>
         </div>
 
-        {/* Notes + Totaux */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-              rows={2}
-              placeholder="Conditions de paiement, remarques..."
-            />
+        {/* Récapitulatif */}
+        <div className="border-t border-gray-100 pt-4 flex flex-col gap-2 items-end text-sm">
+          <div className="flex items-center justify-between w-72">
+            <span className="text-gray-400">Sous-total</span>
+            <span className="font-medium text-gray-700 tabular-nums">{formatFCFA(totaux.ht)}</span>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1 self-end">
-            <div className="flex justify-between text-gray-600">
-              <span>Total HT</span><span className="tabular-nums">{formatFCFA(totaux.ht)}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>TVA</span><span className="tabular-nums">{formatFCFA(totaux.tva)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-gray-900 pt-1 border-t border-gray-200">
-              <span>Total TTC</span><span className="tabular-nums">{formatFCFA(totaux.ttc)}</span>
-            </div>
+          <div className="flex items-center justify-between w-72">
+            <span className="text-gray-400">Remise (optionnelle)</span>
+            <input type="number" min={0} placeholder="0"
+              className="w-28 border border-gray-200 rounded-lg px-3 py-1 text-sm text-right focus:outline-none focus:border-[#1B3A2D] tabular-nums"
+              defaultValue={0} />
+          </div>
+          <div className="flex items-center justify-between w-72">
+            <span className="text-gray-400">TVA (FCFA)</span>
+            <span className="text-gray-600 tabular-nums">{formatFCFA(totaux.tva)}</span>
+          </div>
+          <div className="flex items-center justify-between w-72 pt-2 border-t border-gray-200">
+            <span className="font-bold text-gray-900">Total TTC</span>
+            <span className="text-xl font-bold text-gray-900 tabular-nums">{formatFCFA(totaux.ttc)}</span>
           </div>
         </div>
 
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
-        <div className="flex gap-2 pt-2">
-          <Button variant="secondary" className="flex-1 justify-center" onClick={onClose}>Annuler</Button>
-          <Button className="flex-1 justify-center" loading={isPending} onClick={handleSubmit}>
-            Créer la facture
-          </Button>
+        {/* Date d'échéance */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Date d&apos;échéance</label>
+          <input type="date" value={dateEcheance} onChange={(e) => setDateEcheance(e.target.value)}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 bg-white outline-none focus:border-[#1B3A2D] cursor-pointer" />
         </div>
+
+        {formError && <p className="text-sm text-red-500">{formError}</p>}
       </div>
-    </Modal>
+
+      {/* Footer */}
+      <div className="px-6 py-5 border-t border-gray-100 flex items-center justify-end gap-3 shrink-0">
+        <button onClick={onClose} className="px-5 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          Annuler
+        </button>
+        <button onClick={handleSubmit} disabled={isPending}
+          className="px-5 py-3 rounded-xl bg-[#1B3A2D] text-white text-sm font-medium hover:bg-[#162E22] transition-colors disabled:opacity-60">
+          {isPending ? 'Création...' : 'Créer la facture'}
+        </button>
+      </div>
+
+      </div>
+    </div>
   );
 }

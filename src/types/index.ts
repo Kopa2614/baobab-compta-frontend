@@ -220,7 +220,7 @@ export interface Devis {
   client_id?: string;
   date_emission: string;
   date_validite?: string;
-  statut: 'brouillon' | 'envoye' | 'accepte' | 'refuse' | 'expire';
+  statut: 'brouillon' | 'envoye' | 'accepte' | 'refuse' | 'expire' | 'converti';
   montant_ht: number;
   tva_taux: number;
   montant_tva: number;

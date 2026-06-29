@@ -4,7 +4,6 @@ import { useCreateDevis } from '@/hooks/useDevis';
 import { useAllClients } from '@/hooks/useClients';
 import { useAllProduits } from '@/hooks/useProduits';
 import { useEntreprise } from '@/hooks/useEntreprise';
-import { Modal } from '@/components/ui/Modal';
 import { formatFCFA } from '@/lib/utils';
 import { Plus, Trash2, ChevronDown, X } from 'lucide-react';
 import type { DevisLigne, Produit } from '@/types';
@@ -149,7 +148,20 @@ export function CreateDevisModal({ onClose, defaultClientId }: Props) {
   }
 
   return (
-    <Modal title="Ajouter un devis" onClose={onClose} size="lg">
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative bg-white w-[520px] h-full flex flex-col shadow-2xl">
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
+        <h2 className="text-lg font-bold text-gray-900">Ajouter un devis</h2>
+        <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
       <div className="space-y-5">
 
         {/* Client */}
@@ -338,25 +350,22 @@ export function CreateDevisModal({ onClose, defaultClientId }: Props) {
           </div>
         )}
 
-        {formError && <p className="text-sm text-red-600">{formError}</p>}
-
-        {/* Boutons */}
-        <div className="flex gap-3 pt-1">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isPending}
-            className="flex-1 py-3 rounded-xl bg-[#1B3A2D] text-white text-sm font-medium hover:bg-[#162E22] transition-colors disabled:opacity-60"
-          >
-            {isPending ? 'Création...' : 'Créer le devis'}
-          </button>
-        </div>
+        {formError && <p className="text-sm text-red-500">{formError}</p>}
       </div>
-    </Modal>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-5 border-t border-gray-100 flex items-center justify-end gap-3 shrink-0">
+        <button onClick={onClose} className="px-5 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+          Annuler
+        </button>
+        <button onClick={handleSubmit} disabled={isPending}
+          className="px-5 py-3 rounded-xl bg-[#1B3A2D] text-white text-sm font-medium hover:bg-[#162E22] transition-colors disabled:opacity-60">
+          {isPending ? 'Création...' : 'Créer le devis'}
+        </button>
+      </div>
+
+      </div>
+    </div>
   );
 }

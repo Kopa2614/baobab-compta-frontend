@@ -1,17 +1,16 @@
 'use client';
 
 const STATUT_CONFIG = {
-  payee:     { label: 'Payée',     classes: 'bg-green-100 text-green-800' },
-  impayee:   { label: 'Impayée',   classes: 'bg-orange-100 text-orange-800' },
-  partielle: { label: 'Partielle', classes: 'bg-blue-100 text-blue-800' },
-  annulee:   { label: 'Annulée',   classes: 'bg-gray-100 text-gray-500' },
-  // Devis statuts
-  brouillon: { label: 'Brouillon', classes: 'bg-gray-100 text-gray-600' },
-  envoye:    { label: 'Envoyé',    classes: 'bg-blue-100 text-blue-700' },
-  accepte:   { label: 'Accepté',   classes: 'bg-green-100 text-green-800' },
-  refuse:    { label: 'Refusé',    classes: 'bg-red-100 text-red-700' },
-  expire:    { label: 'Expiré',    classes: 'bg-orange-100 text-orange-700' },
-  converti:  { label: 'Converti',  classes: 'bg-purple-100 text-purple-700' },
+  payee:     { label: 'Payée',     classes: 'border border-green-400 text-green-600 bg-green-50' },
+  impayee:   { label: 'Impayée',   classes: 'border border-red-400 text-red-500 bg-red-50' },
+  partielle: { label: 'Partielle', classes: 'border border-blue-400 text-blue-600 bg-blue-50' },
+  annulee:   { label: 'Annulée',   classes: 'border border-gray-300 text-gray-500 bg-gray-50' },
+  brouillon: { label: 'Brouillon', classes: 'border border-amber-400 text-amber-600 bg-amber-50' },
+  envoye:    { label: 'Envoyé',    classes: 'border border-blue-400 text-blue-600 bg-blue-50' },
+  accepte:   { label: 'Accepté',   classes: 'border border-green-400 text-green-600 bg-green-50' },
+  refuse:    { label: 'Refusé',    classes: 'border border-red-400 text-red-500 bg-red-50' },
+  expire:    { label: 'Expiré',    classes: 'border border-orange-400 text-orange-600 bg-orange-50' },
+  converti:  { label: 'Converti',  classes: 'border border-purple-400 text-purple-600 bg-purple-50' },
 };
 
 export function BadgeStatut({ statut }: { statut: keyof typeof STATUT_CONFIG }) {

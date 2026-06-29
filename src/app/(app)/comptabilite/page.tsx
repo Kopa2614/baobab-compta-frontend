@@ -1,71 +1,57 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useJournal, useRapportPeriode } from '@/hooks/useJournal';
+import { useDashboard } from '@/hooks/useDashboard';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { formatFCFA, formatDate } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp, ArrowLeftRight, Users, Wallet, Upload } from 'lucide-react';
 import { getToken } from '@/lib/auth';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, ReferenceLine,
 } from 'recharts';
 
-const MOIS_LABELS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+type Periode = 'today' | 'week' | 'month' | 'custom';
+
+const TABS: { key: Periode; label: string }[] = [
+  { key: 'today', label: "Aujourd'hui" },
+  { key: 'week',  label: 'Cette semaine' },
+  { key: 'month', label: 'Ce mois' },
+  { key: 'custom', label: 'Personnalisé' },
 ];
-const MOIS_COURTS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-const ANNEES = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
-type Mode = 'mois' | 'annee' | 'intervalle';
+function fmt(d: Date) { return d.toISOString().slice(0, 10); }
 
-function toDateStr(y: number, m: number, d: number) {
-  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
-function dernierJour(y: number, m: number) {
-  return new Date(y, m, 0).getDate();
+function periodeParams(p: Periode, debut: string, fin: string) {
+  const now = new Date();
+  if (p === 'today') return { date_debut: fmt(now), date_fin: fmt(now) };
+  if (p === 'week') {
+    const start = new Date(now); start.setDate(now.getDate() - now.getDay() + 1);
+    return { date_debut: fmt(start), date_fin: fmt(now) };
+  }
+  if (p === 'month') {
+    return { date_debut: fmt(new Date(now.getFullYear(), now.getMonth(), 1)), date_fin: fmt(now) };
+  }
+  return { date_debut: debut, date_fin: fin };
 }
 
 export default function ComptabilitePage() {
   const now = new Date();
 
-  const [mode, setMode] = useState<Mode>('mois');
-
-  const [mois, setMois]   = useState(now.getMonth() + 1);
-  const [annee, setAnnee] = useState(now.getFullYear());
-  const [anneeMode, setAnneeMode] = useState(now.getFullYear());
-  const [dateDebut, setDateDebut] = useState(toDateStr(now.getFullYear(), 1, 1));
-  const [dateFin,   setDateFin]   = useState(toDateStr(now.getFullYear(), now.getMonth() + 1, now.getDate()));
+  const [periode, setPeriode] = useState<Periode>('month');
+  const [dateDebut, setDateDebut] = useState(fmt(new Date(now.getFullYear(), now.getMonth(), 1)));
+  const [dateFin, setDateFin] = useState(fmt(now));
   const [page, setPage] = useState(1);
 
-  const params = (() => {
-    if (mode === 'mois')       return { date_debut: toDateStr(annee, mois, 1),       date_fin: toDateStr(annee, mois, dernierJour(annee, mois)) };
-    if (mode === 'annee')      return { date_debut: toDateStr(anneeMode, 1, 1),       date_fin: toDateStr(anneeMode, 12, 31) };
-    return { date_debut: dateDebut, date_fin: dateFin };
-  })();
+  const params = useMemo(
+    () => periodeParams(periode, dateDebut, dateFin),
+    [periode, dateDebut, dateFin]
+  );
 
   const { data, isLoading } = useJournal({ ...params, page });
-  const { data: rapport }   = useRapportPeriode(params.date_debut, params.date_fin);
-
-  const periodeLabel = (() => {
-    if (mode === 'mois')  return `${MOIS_LABELS[mois - 1]} ${annee}`;
-    if (mode === 'annee') return `Année ${anneeMode}`;
-    const d1 = new Date(dateDebut).toLocaleDateString('fr-FR');
-    const d2 = new Date(dateFin).toLocaleDateString('fr-FR');
-    return `${d1} – ${d2}`;
-  })();
-
-  function moisPrecedent() {
-    setPage(1);
-    if (mois === 1) { setMois(12); setAnnee((a) => a - 1); }
-    else setMois((m) => m - 1);
-  }
-  function moisSuivant() {
-    setPage(1);
-    if (mois === 12) { setMois(1); setAnnee((a) => a + 1); }
-    else setMois((m) => m + 1);
-  }
+  const { data: rapport } = useRapportPeriode(params.date_debut, params.date_fin);
+  const { data: kpis } = useDashboard(params);
 
   function exportCsv() {
     const token = getToken();
@@ -80,171 +66,143 @@ export default function ComptabilitePage() {
       });
   }
 
+  const periodeLabel = (() => {
+    if (periode === 'today') return "Aujourd'hui";
+    if (periode === 'week') return 'Cette semaine';
+    if (periode === 'month') return 'Ce mois';
+    const d1 = new Date(dateDebut).toLocaleDateString('fr-FR');
+    const d2 = new Date(dateFin).toLocaleDateString('fr-FR');
+    return `${d1} – ${d2}`;
+  })();
+
   return (
     <div className="space-y-6">
 
-      {/* En-tête */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <h2 className="text-xl font-bold text-gray-900">Comptabilité — Journal</h2>
-        <Button variant="secondary" size="sm" onClick={exportCsv}>
-          <Download size={15} /> Exporter CSV
-        </Button>
-      </div>
-
-      {/* Sélecteur de période */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Modes */}
-        <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
-          {(['mois', 'annee', 'intervalle'] as Mode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => { setMode(m); setPage(1); }}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors
-                ${mode === m ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              {m === 'mois' ? 'Mois' : m === 'annee' ? 'Année' : 'Intervalle'}
+      {/* Filtres + Exporter */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1">
+          {TABS.map((t) => (
+            <button key={t.key} onClick={() => { setPeriode(t.key); setPage(1); }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors
+                ${periode === t.key
+                  ? 'bg-[#1B3A2D] text-white'
+                  : 'text-gray-500 hover:text-gray-800'
+                }`}>
+              {t.label}
             </button>
           ))}
         </div>
 
-        {/* Contrôles mois */}
-        {mode === 'mois' && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={moisPrecedent} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50">
-              <ChevronLeft size={16} className="text-gray-600" />
-            </button>
-            <div className="flex gap-1">
-              {MOIS_COURTS.map((label, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setMois(i + 1); setPage(1); }}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors
-                    ${mois === i + 1 ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <select
-              value={annee}
-              onChange={(e) => { setAnnee(parseInt(e.target.value)); setPage(1); }}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
-            >
-              {ANNEES.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
-            <button onClick={moisSuivant} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50">
-              <ChevronRight size={16} className="text-gray-600" />
-            </button>
-          </div>
-        )}
-
-        {/* Contrôles année */}
-        {mode === 'annee' && (
-          <div className="flex items-center gap-2">
-            <button onClick={() => setAnneeMode((a) => a - 1)} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50">
-              <ChevronLeft size={16} className="text-gray-600" />
-            </button>
-            <select
-              value={anneeMode}
-              onChange={(e) => { setAnneeMode(parseInt(e.target.value)); setPage(1); }}
-              className="border border-gray-200 rounded-lg px-4 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-green-500"
-            >
-              {ANNEES.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
-            <button onClick={() => setAnneeMode((a) => a + 1)} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50">
-              <ChevronRight size={16} className="text-gray-600" />
-            </button>
-          </div>
-        )}
-
-        {/* Contrôles intervalle */}
-        {mode === 'intervalle' && (
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-            <span className="text-xs text-gray-500">Du</span>
-            <input
-              type="date"
-              value={dateDebut}
-              max={dateFin}
+        {/* Date pickers pour Personnalisé */}
+        {periode === 'custom' && (
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5">
+            <span className="text-xs text-gray-400">Du</span>
+            <input type="date" value={dateDebut} max={dateFin}
               onChange={(e) => { setDateDebut(e.target.value); setPage(1); }}
-              className="text-sm text-gray-800 bg-transparent outline-none cursor-pointer"
-            />
+              className="text-sm text-gray-800 bg-transparent outline-none cursor-pointer" />
             <span className="text-xs text-gray-400">au</span>
-            <input
-              type="date"
-              value={dateFin}
-              min={dateDebut}
+            <input type="date" value={dateFin} min={dateDebut}
               onChange={(e) => { setDateFin(e.target.value); setPage(1); }}
-              className="text-sm text-gray-800 bg-transparent outline-none cursor-pointer"
-            />
+              className="text-sm text-gray-800 bg-transparent outline-none cursor-pointer" />
           </div>
         )}
+
+        <div className="flex-1" />
+        <button onClick={exportCsv}
+          className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-full text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors font-medium">
+          Exporter <Upload size={14} />
+        </button>
       </div>
 
-      {/* Rapport de la période */}
-      {rapport && (
-        <>
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1">Chiffre d'affaires HT</p>
-              <p className="text-xl font-bold text-green-600">{formatFCFA(rapport.ca)}</p>
-              <p className="text-xs text-gray-400 mt-1">{periodeLabel}</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1">Charges</p>
-              <p className="text-xl font-bold text-red-500">{formatFCFA(rapport.charges)}</p>
-              <p className="text-xs text-gray-400 mt-1">{periodeLabel}</p>
-            </Card>
-            <Card className={`p-4 text-center border-l-4 ${rapport.resultat_net >= 0 ? 'border-green-500' : 'border-red-500'}`}>
-              <p className="text-xs text-gray-500 mb-1">Résultat net</p>
-              <p className={`text-xl font-bold ${rapport.resultat_net >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                {formatFCFA(rapport.resultat_net)}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">{periodeLabel}</p>
-            </Card>
+      {/* KPI row — carte unique avec séparateurs */}
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">CA encaissé</p>
+              <p className="text-xl font-bold text-gray-900">{formatFCFA(rapport?.ca ?? 0)}</p>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+              <TrendingUp size={17} className="text-gray-500" />
+            </div>
           </div>
 
-          {/* BarChart CA vs Charges */}
-          <Card className="p-5">
-            <p className="text-sm font-semibold text-gray-900 mb-4">Comparaison CA / Charges — {periodeLabel}</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart
-                data={[
-                  { name: 'CA HT',    valeur: rapport.ca,       fill: '#16a34a' },
-                  { name: 'Charges',  valeur: rapport.charges,  fill: '#ef4444' },
-                  { name: 'Résultat', valeur: Math.abs(rapport.resultat_net), fill: rapport.resultat_net >= 0 ? '#2563eb' : '#f97316' },
-                ]}
-                margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
-                barSize={56}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                <YAxis
-                  tickFormatter={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `${(v / 1_000).toFixed(0)}k` : String(v)}
-                  tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={48}
-                />
-                <Tooltip
-                  formatter={(v, _, props) => [formatFCFA(Number(v)), props.payload.name]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                />
-                <ReferenceLine y={0} stroke="#e5e7eb" />
-                <Bar dataKey="valeur" radius={[6, 6, 0, 0]}>
-                  {[
-                    { fill: '#16a34a' },
-                    { fill: '#ef4444' },
-                    { fill: rapport.resultat_net >= 0 ? '#2563eb' : '#f97316' },
-                  ].map((entry, i) => (
-                    <Cell key={i} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            {rapport.resultat_net < 0 && (
-              <p className="text-xs text-orange-600 font-medium mt-2 text-center">
-                ⚠ Les charges dépassent le CA de {formatFCFA(Math.abs(rapport.resultat_net))} sur cette période
-              </p>
-            )}
-          </Card>
-        </>
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Dettes fournisseurs</p>
+              <p className="text-xl font-bold text-gray-900">{formatFCFA(kpis?.total_dettes ?? 0)}</p>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+              <ArrowLeftRight size={17} className="text-gray-500" />
+            </div>
+          </div>
+
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Créances clients</p>
+              <p className="text-xl font-bold text-gray-900">{formatFCFA(kpis?.total_creances ?? 0)}</p>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+              <Users size={17} className="text-gray-500" />
+            </div>
+          </div>
+
+          <div className="px-6 py-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Solde trésorerie</p>
+              <p className="text-xl font-bold text-gray-900">{formatFCFA(kpis?.solde_tresorerie ?? 0)}</p>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+              <Wallet size={17} className="text-gray-500" />
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Graphique CA vs Charges */}
+      {rapport && (
+        <Card className="p-5">
+          <p className="text-sm font-semibold text-gray-900 mb-4">Comparaison CA / Charges — {periodeLabel}</p>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart
+              data={[
+                { name: 'CA HT',    valeur: rapport.ca,      fill: '#16a34a' },
+                { name: 'Charges',  valeur: rapport.charges, fill: '#ef4444' },
+                { name: 'Résultat', valeur: Math.abs(rapport.resultat_net), fill: rapport.resultat_net >= 0 ? '#2563eb' : '#f97316' },
+              ]}
+              margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
+              barSize={56}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+              <YAxis
+                tickFormatter={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `${(v / 1_000).toFixed(0)}k` : String(v)}
+                tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={48}
+              />
+              <Tooltip
+                formatter={(v, _, props) => [formatFCFA(Number(v)), props.payload.name]}
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
+              />
+              <ReferenceLine y={0} stroke="#e5e7eb" />
+              <Bar dataKey="valeur" radius={[6, 6, 0, 0]}>
+                {[
+                  { fill: '#16a34a' },
+                  { fill: '#ef4444' },
+                  { fill: rapport.resultat_net >= 0 ? '#2563eb' : '#f97316' },
+                ].map((entry, i) => (
+                  <Cell key={i} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          {rapport.resultat_net < 0 && (
+            <p className="text-xs text-orange-600 font-medium mt-2 text-center">
+              ⚠ Les charges dépassent le CA de {formatFCFA(Math.abs(rapport.resultat_net))} sur cette période
+            </p>
+          )}
+        </Card>
       )}
 
       {/* Tableau des écritures */}
@@ -255,24 +213,24 @@ export default function ComptabilitePage() {
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="w-6 h-6 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-[#1B3A2D] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left p-4 font-medium text-gray-500">Date</th>
-                <th className="text-left p-4 font-medium text-gray-500">Pièce</th>
-                <th className="text-left p-4 font-medium text-gray-500">Libellé</th>
-                <th className="text-left p-4 font-medium text-gray-500">Débit</th>
-                <th className="text-left p-4 font-medium text-gray-500">Crédit</th>
-                <th className="text-right p-4 font-medium text-gray-500">Montant</th>
+                <th className="text-left p-4 font-medium text-gray-400">Date</th>
+                <th className="text-left p-4 font-medium text-gray-400">Pièce</th>
+                <th className="text-left p-4 font-medium text-gray-400">Libellé</th>
+                <th className="text-left p-4 font-medium text-gray-400">Débit</th>
+                <th className="text-left p-4 font-medium text-gray-400">Crédit</th>
+                <th className="text-right p-4 font-medium text-gray-400">Montant</th>
               </tr>
             </thead>
             <tbody>
               {data?.data.map((e) => (
-                <tr key={e.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="p-4 text-gray-500 text-xs">{formatDate(e.date_ecriture)}</td>
+                <tr key={e.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4 text-gray-400 text-xs">{formatDate(e.date_ecriture)}</td>
                   <td className="p-4 font-mono text-xs text-gray-400">{e.numero_piece ?? '—'}</td>
                   <td className="p-4 text-gray-700">{e.libelle}</td>
                   <td className="p-4 text-xs text-gray-500">
@@ -281,7 +239,7 @@ export default function ComptabilitePage() {
                   <td className="p-4 text-xs text-gray-500">
                     {e.compte_credit ? `${e.compte_credit.numero} — ${e.compte_credit.intitule}` : '—'}
                   </td>
-                  <td className="p-4 text-right font-medium">{formatFCFA(e.montant)}</td>
+                  <td className="p-4 text-right font-medium text-gray-900">{formatFCFA(e.montant)}</td>
                 </tr>
               ))}
               {!data?.data.length && (
@@ -292,7 +250,6 @@ export default function ComptabilitePage() {
         )}
       </Card>
 
-      {/* Pagination */}
       {data && data.last_page > 1 && (
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>{data.total} écritures</span>
