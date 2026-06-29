@@ -203,6 +203,7 @@ export default function AdminEntrepriseDetailPage() {
               <th className="text-left px-4 py-3 font-medium text-gray-500">Nom</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Email</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Rôle</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Dernière connexion</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500">Statut</th>
               <th className="px-4 py-3" />
             </tr>
@@ -213,6 +214,11 @@ export default function AdminEntrepriseDetailPage() {
                 <td className="px-4 py-3 font-medium text-gray-900">{u.nom} {u.prenom ?? ''}</td>
                 <td className="px-4 py-3 text-gray-500">{u.email}</td>
                 <td className="px-4 py-3"><RoleBadge role={u.role} /></td>
+                <td className="px-4 py-3 text-gray-500">
+                  {u.derniere_connexion
+                    ? new Date(u.derniere_connexion).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : <span className="text-gray-300">—</span>}
+                </td>
                 <td className="px-4 py-3 text-center">
                   {u.actif ? (
                     <span className="text-xs text-green-600 font-medium">Actif</span>

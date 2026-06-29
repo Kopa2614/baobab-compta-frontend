@@ -22,6 +22,7 @@ export interface Utilisateur {
   actif: boolean;
   entreprise_id: string | null;
   entreprise?: Entreprise;
+  derniere_connexion?: string | null;
 }
 
 export interface EntrepriseAdmin extends Entreprise {

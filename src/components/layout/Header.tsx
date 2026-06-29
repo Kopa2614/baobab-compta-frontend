@@ -1,9 +1,16 @@
 'use client';
-import { LogOut } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
+const ROLE_LABELS: Record<string, string> = {
+  gerant:      'Gérant',
+  employe:     'Employé',
+  comptable:   'Comptable',
+  super_admin: 'Super Admin',
+};
+
 export function Header() {
-  const { utilisateur, entreprise, logout } = useAuth();
+  const { utilisateur, logout } = useAuth();
 
   const initiales = [utilisateur?.prenom, utilisateur?.nom]
     .filter(Boolean)
@@ -11,36 +18,31 @@ export function Header() {
     .join('')
     .slice(0, 2);
 
-  return (
-    <header className="bg-white border-b border-gray-100 px-6 h-14 flex items-center justify-between shrink-0">
-      {/* Infos entreprise */}
-      <div className="flex items-center gap-3">
-        <p className="text-sm font-semibold text-gray-900">{entreprise?.nom ?? '—'}</p>
-        {entreprise?.secteur_activite && (
-          <>
-            <span className="text-gray-300">·</span>
-            <p className="text-xs text-gray-400">{entreprise.secteur_activite}</p>
-          </>
-        )}
-      </div>
+  const nomComplet = [utilisateur?.prenom, utilisateur?.nom].filter(Boolean).join(' ');
+  const roleLabel = utilisateur?.role ? (ROLE_LABELS[utilisateur.role] ?? utilisateur.role) : '';
 
-      {/* Utilisateur */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
-            <span className="text-xs font-semibold text-green-700">{initiales || '?'}</span>
-          </div>
-          <span className="text-sm text-gray-700 font-medium">
-            {utilisateur?.prenom} {utilisateur?.nom}
-          </span>
+  return (
+    <header className="bg-white border-b border-gray-100 px-6 h-16 flex items-center justify-end shrink-0 gap-3">
+      <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <Bell size={18} className="text-gray-400" />
+      </button>
+
+      <div className="w-px h-6 bg-gray-200" />
+
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+          <span className="text-sm font-bold text-amber-700">{initiales || '?'}</span>
         </div>
-        <div className="w-px h-4 bg-gray-200" />
+        <div className="leading-tight">
+          <p className="text-sm font-semibold text-gray-900">{nomComplet || '—'}</p>
+          <p className="text-xs text-gray-400">{roleLabel}</p>
+        </div>
         <button
           onClick={logout}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition-colors"
+          title="Déconnexion"
+          className="ml-1 p-1.5 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors"
         >
-          <LogOut size={14} />
-          Déconnexion
+          <LogOut size={15} />
         </button>
       </div>
     </header>

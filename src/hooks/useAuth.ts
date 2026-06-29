@@ -36,6 +36,8 @@ export function useAuth() {
     setError(null);
     try {
       const { data } = await api.post('/auth/login', { email, mot_de_passe });
+      // Clear any lingering impersonation state before setting the new session
+      localStorage.removeItem('baobab_admin_session');
       setToken(data.token);
       const authState: AuthState = { utilisateur: data.utilisateur, entreprise: data.entreprise };
       setState(authState);
@@ -51,6 +53,7 @@ export function useAuth() {
   function logout() {
     removeToken();
     localStorage.removeItem('baobab_user');
+    localStorage.removeItem('baobab_admin_session');
     setState({ utilisateur: null, entreprise: null });
     router.push('/login');
   }

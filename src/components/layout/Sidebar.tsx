@@ -9,13 +9,13 @@ import {
 
 const NAV_MAIN = [
   { href: '/dashboard',      label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/clients',        label: 'Clients',          icon: Users },
-  { href: '/fournisseurs',   label: 'Fournisseurs',     icon: Building2 },
+  { href: '/clients',        label: 'Client',           icon: Users },
+  { href: '/fournisseurs',   label: 'Fournisseur',      icon: Building2 },
   { href: '/devis',          label: 'Devis',            icon: ClipboardList },
-  { href: '/factures',       label: 'Factures',         icon: FileText },
+  { href: '/factures',       label: 'Facture',          icon: FileText },
   { href: '/tresorerie',     label: 'Trésorerie',       icon: Wallet },
-  { href: '/frais-generaux', label: 'Frais généraux',   icon: Receipt },
   { href: '/comptabilite',   label: 'Comptabilité',     icon: BookOpen },
+  { href: '/frais-generaux', label: 'Frais généraux',   icon: Receipt },
 ];
 
 export function Sidebar() {
@@ -26,15 +26,15 @@ export function Sidebar() {
     return (
       <Link
         href={href}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group
           ${active
-            ? 'bg-white/10 text-white'
-            : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-100'
+            ? 'bg-white text-[#1B3A2D] font-semibold shadow-sm'
+            : 'text-white/65 hover:bg-white/10 hover:text-white'
           }`}
       >
         <Icon
-          size={18}
-          className={active ? 'text-green-400' : 'text-slate-500 group-hover:text-slate-300'}
+          size={17}
+          className={active ? 'text-[#1B3A2D]' : 'text-white/50 group-hover:text-white/80'}
         />
         {label}
       </Link>
@@ -42,19 +42,16 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-60 bg-[#1a2230] min-h-screen flex flex-col shrink-0">
-      {/* Logo */}
-      <div className="px-4 py-4 border-b border-white/[0.08] flex justify-center">
-        <Image src="/logo.png" alt="Baobab Gestion" width={120} height={80} className="object-contain" />
+    <aside className="w-52 bg-[#1B3A2D] min-h-screen flex flex-col shrink-0">
+      <div className="px-4 py-5 border-b border-white/10 flex justify-center">
+        <Image src="/logo.png" alt="Baobab Gestion" width={110} height={70} className="object-contain" />
       </div>
 
-      {/* Navigation principale */}
       <nav className="flex-1 px-3 py-3 space-y-0.5">
         {NAV_MAIN.map((item) => <NavItem key={item.href} {...item} />)}
       </nav>
 
-      {/* Paramètres en bas */}
-      <div className="px-3 py-3 border-t border-white/[0.08]">
+      <div className="px-3 py-4 border-t border-white/10">
         <NavItem href="/parametres" label="Paramètres" icon={Settings} />
       </div>
     </aside>
