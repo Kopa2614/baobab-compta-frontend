@@ -244,7 +244,9 @@ export default function DashboardPage() {
                         outerRadius={82}
                         paddingAngle={3}
                         dataKey="value"
-                        label={({ name, cx, cy, midAngle, outerRadius }: { name: string; cx: number; cy: number; midAngle: number; outerRadius: number }) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        label={((props: any) => {
+                          const { name, cx, cy, midAngle, outerRadius } = props;
                           if (midAngle == null) return null;
                           const RADIAN = Math.PI / 180;
                           const r = outerRadius + 18;
@@ -255,11 +257,12 @@ export default function DashboardPage() {
                               {name}
                             </text>
                           );
-                        }}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        }) as any}
                         labelLine={{ stroke: '#d1d5db', strokeWidth: 1 }}
                       >
                       </Pie>
-                      <Tooltip formatter={(v: number) => [v, '']} />
+                      <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
                 </>
