@@ -244,7 +244,8 @@ export default function DashboardPage() {
                         outerRadius={82}
                         paddingAngle={3}
                         dataKey="value"
-                        label={({ name, cx, cy, midAngle, outerRadius }) => {
+                        label={({ name, cx, cy, midAngle, outerRadius }: { name: string; cx: number; cy: number; midAngle: number; outerRadius: number }) => {
+                          if (midAngle == null) return null;
                           const RADIAN = Math.PI / 180;
                           const r = outerRadius + 18;
                           const x = cx + r * Math.cos(-midAngle * RADIAN);
