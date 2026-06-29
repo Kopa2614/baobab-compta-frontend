@@ -49,6 +49,7 @@ export interface Client {
   actif: boolean;
   notes?: string;
   factures?: Facture[];
+  devis?: Devis[];
 }
 
 export interface Fournisseur {

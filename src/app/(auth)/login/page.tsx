@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Dancing_Script } from 'next/font/google';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
-import { User, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 
 const dancing = Dancing_Script({ subsets: ['latin'], weight: '700' });
 
@@ -37,47 +37,23 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
 
-      {/* ── Colonne gauche – panneau décoratif (remplacer par une <Image> si /public/login-photo.jpg est ajouté) ── */}
-      <div className="hidden md:flex md:w-[40%] bg-[#1B3A2D] flex-col items-center justify-center relative overflow-hidden">
-        {/* Cercles décoratifs */}
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/5 rounded-full" />
-        <div className="absolute top-1/3 -right-16 w-56 h-56 bg-white/5 rounded-full" />
-        <div className="absolute -bottom-16 left-8 w-48 h-48 bg-white/5 rounded-full" />
+      {/* ── Colonne gauche – photo uniquement ── */}
+      {/* Ajouter /public/login-photo.jpg pour afficher la photo */}
+      <div
+        className="hidden md:block md:w-[38%] bg-[#1B3A2D] bg-cover bg-center"
+        style={{ backgroundImage: "url('/login-photo.jpg')" }}
+      />
 
-        {/* Contenu centré */}
-        <div className="relative z-10 flex flex-col items-center gap-6 px-12 text-center">
-          <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm">
-            <Image
-              src="/logo.png"
-              alt="Baobab Gestion"
-              width={130}
-              height={87}
-              className="object-contain brightness-0 invert opacity-90"
-            />
-          </div>
-          <div>
-            <h2 className="text-white text-xl font-semibold mb-2">Baobab Gestion</h2>
-            <p className="text-white/55 text-sm leading-relaxed max-w-[220px]">
-              La solution comptable simple et rapide pour les commerçants sénégalais.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Colonne droite – formulaire ── */}
-      <div className="flex-1 flex items-center justify-center bg-white px-8 py-12">
+      {/* ── Colonne droite – logo + titre + formulaire ── */}
+      <div className="flex-1 flex items-center justify-center bg-white px-10 py-12">
         <div className="w-full max-w-[340px]">
 
-          {/* Logo mobile */}
-          <div className="flex justify-center mb-8 md:hidden">
-            <Image src="/logo.png" alt="Baobab Gestion" width={100} height={67} className="object-contain" />
-          </div>
-
-          {/* Logo desktop (petit, dans la colonne form) */}
-          <div className="hidden md:flex justify-center mb-6">
-            <div className="flex items-center gap-2.5">
-              <Image src="/logo.png" alt="" width={36} height={24} className="object-contain" />
-              <span className="text-[#1B3A2D] font-bold text-lg tracking-tight">Baobab Gestion</span>
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-2.5 mb-7">
+            <Image src="/logo.png" alt="Baobab Gestion" width={38} height={26} className="object-contain" />
+            <div className="leading-[1.15]">
+              <div className="text-[#1B3A2D] font-bold text-base">Baobab</div>
+              <div className="text-[#1B3A2D] font-bold text-base">Gestion</div>
             </div>
           </div>
 
@@ -85,7 +61,7 @@ export default function LoginPage() {
           {vue === 'login' && (
             <>
               <div className="text-center mb-9">
-                <h1 className={`${dancing.className} text-[2.6rem] leading-tight text-gray-900 mb-1.5`}>
+                <h1 className={`${dancing.className} text-[2.6rem] leading-tight text-gray-900 mb-2`}>
                   Bienvenue de nouveau !
                 </h1>
                 <p className="text-sm text-gray-400">
@@ -104,14 +80,14 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Adresse email"
+                    placeholder="Adresse email ou numéro de téléphone"
                     required
                     className="w-full border-0 border-b border-gray-200 pb-3 pl-6 pr-3 text-sm bg-transparent text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#1B3A2D] transition-colors"
                   />
                 </div>
 
                 {/* Mot de passe */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="relative">
                     <Lock size={15} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     <input
@@ -124,8 +100,8 @@ export default function LoginPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPwd(!showPwd)}
                       tabIndex={-1}
+                      onClick={() => setShowPwd(!showPwd)}
                       className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -144,13 +120,13 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-red-500 text-center -mt-4">{error}</p>
+                  <p className="text-sm text-red-500 text-center">{error}</p>
                 )}
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-[#1B3A2D] text-white rounded-full text-sm font-semibold hover:bg-[#162E22] transition-colors disabled:opacity-60 shadow-lg shadow-[#1B3A2D]/20 mt-2"
+                  className="w-full py-4 bg-[#1B3A2D] text-white rounded-full text-sm font-semibold hover:bg-[#162E22] transition-colors disabled:opacity-60 shadow-lg shadow-[#1B3A2D]/20"
                 >
                   {loading ? 'Connexion...' : 'Connexion'}
                 </button>
@@ -162,7 +138,7 @@ export default function LoginPage() {
           {vue === 'oublie' && (
             <>
               <div className="text-center mb-9">
-                <h1 className={`${dancing.className} text-[2.6rem] leading-tight text-gray-900 mb-1.5`}>
+                <h1 className={`${dancing.className} text-[2.6rem] leading-tight text-gray-900 mb-2`}>
                   Mot de passe oublié
                 </h1>
                 <p className="text-sm text-gray-400">
