@@ -3,6 +3,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useCreateDevis } from '@/hooks/useDevis';
 import { useAllClients } from '@/hooks/useClients';
 import { useAllProduits } from '@/hooks/useProduits';
+import { useEntreprise } from '@/hooks/useEntreprise';
 import { Modal } from '@/components/ui/Modal';
 import { formatFCFA } from '@/lib/utils';
 import { Plus, Trash2, ChevronDown, X } from 'lucide-react';
@@ -79,6 +80,8 @@ export function CreateDevisModal({ onClose, defaultClientId }: Props) {
   const { data: clients } = useAllClients();
   const { data: produits } = useAllProduits();
   const { mutate: createDevis, isPending } = useCreateDevis();
+  const { data: entreprise } = useEntreprise();
+  const tvaTaux = entreprise?.tva_taux_defaut ?? 18;
 
   const [clientId, setClientId] = useState(defaultClientId ?? '');
   const [dateEmission, setDateEmission] = useState(new Date().toISOString().slice(0, 10));
@@ -89,6 +92,15 @@ export function CreateDevisModal({ onClose, defaultClientId }: Props) {
   });
   const [notes, setNotes] = useState('');
   const [lignes, setLignes] = useState<LigneForm[]>([{ ...LIGNE_VIDE }]);
+
+  // Sync TVA rate from entreprise config once data is available
+  const tvaTauxInit = useRef(false);
+  useEffect(() => {
+    if (!tvaTauxInit.current && entreprise?.tva_taux_defaut != null) {
+      tvaTauxInit.current = true;
+      setLignes([{ ...LIGNE_VIDE, tva_taux: entreprise.tva_taux_defaut }]);
+    }
+  }, [entreprise?.tva_taux_defaut]);
   const [remise, setRemise] = useState(0);
   const [formError, setFormError] = useState('');
   const [openCatalogue, setOpenCatalogue] = useState<number | null>(null);
@@ -276,7 +288,7 @@ export function CreateDevisModal({ onClose, defaultClientId }: Props) {
 
           <button
             type="button"
-            onClick={() => setLignes((p) => [...p, { ...LIGNE_VIDE }])}
+            onClick={() => setLignes((p) => [...p, { ...LIGNE_VIDE, tva_taux: tvaTaux }])}
             className="mt-3 flex items-center gap-1.5 text-sm text-[#1B3A2D] font-medium hover:underline"
           >
             <Plus size={14} /> Ajouter une ligne

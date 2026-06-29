@@ -3,6 +3,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useCreateFacture } from '@/hooks/useFactures';
 import { useAllClients } from '@/hooks/useClients';
 import { useAllProduits } from '@/hooks/useProduits';
+import { useEntreprise } from '@/hooks/useEntreprise';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -95,12 +96,23 @@ export function CreateFactureModal({ onClose, defaultClientId }: Props) {
   const { data: clients } = useAllClients();
   const { data: produits } = useAllProduits();
   const { mutate: createFacture, isPending } = useCreateFacture();
+  const { data: entreprise } = useEntreprise();
+  const tvaTaux = entreprise?.tva_taux_defaut ?? 18;
 
   const [clientId, setClientId] = useState(defaultClientId ?? '');
   const [dateEmission, setDateEmission] = useState(new Date().toISOString().slice(0, 10));
   const [dateEcheance, setDateEcheance] = useState('');
   const [notes, setNotes] = useState('');
   const [lignes, setLignes] = useState<LigneForm[]>([{ ...LIGNE_VIDE }]);
+
+  // Sync TVA rate from entreprise config once data is available
+  const tvaTauxInit = useRef(false);
+  useEffect(() => {
+    if (!tvaTauxInit.current && entreprise?.tva_taux_defaut != null) {
+      tvaTauxInit.current = true;
+      setLignes([{ ...LIGNE_VIDE, tva_taux: entreprise.tva_taux_defaut }]);
+    }
+  }, [entreprise?.tva_taux_defaut]);
   const [formError, setFormError] = useState('');
   const [openCatalogue, setOpenCatalogue] = useState<number | null>(null);
 
@@ -167,7 +179,7 @@ export function CreateFactureModal({ onClose, defaultClientId }: Props) {
         <div>
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-medium text-gray-700">Lignes de facture</label>
-            <Button variant="ghost" size="sm" onClick={() => setLignes((p) => [...p, { ...LIGNE_VIDE }])}>
+            <Button variant="ghost" size="sm" onClick={() => setLignes((p) => [...p, { ...LIGNE_VIDE, tva_taux: tvaTaux }])}>
               <Plus size={14} /> Ajouter une ligne
             </Button>
           </div>
