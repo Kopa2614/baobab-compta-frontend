@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import Image from 'next/image';
 import { Dancing_Script } from 'next/font/google';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
@@ -49,11 +48,10 @@ export default function LoginPage() {
         <div className="w-full max-w-[340px]">
 
           {/* Logo */}
-          <div className="flex items-center justify-center gap-2.5 mb-7">
-            <Image src="/logo.png" alt="Baobab Gestion" width={38} height={26} className="object-contain" />
-            <div className="leading-[1.15]">
-              <div className="text-[#1B3A2D] font-bold text-base">Baobab</div>
-              <div className="text-[#1B3A2D] font-bold text-base">Gestion</div>
+          <div className="flex items-center justify-center mb-7">
+            <div className="text-center">
+              <span className="text-[#1B3A2D] font-bold text-xl tracking-tight">Baobab</span>
+              <span className="block text-[#1B3A2D] font-bold text-xl tracking-tight -mt-1">Gestion</span>
             </div>
           </div>
 
