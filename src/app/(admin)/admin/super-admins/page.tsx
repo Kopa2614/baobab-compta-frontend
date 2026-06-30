@@ -1,20 +1,42 @@
 'use client';
 import { useState } from 'react';
-import { useSuperAdmins, useCreateSuperAdmin } from '@/hooks/useAdmin';
+import { useSuperAdmins, useCreateSuperAdmin, useResetSuperAdminPassword } from '@/hooks/useAdmin';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { ShieldCheck, Plus, UserCog } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { ShieldCheck, Plus, UserCog, KeyRound } from 'lucide-react';
 
 const FORM_VIDE = { nom: '', prenom: '', email: '', telephone: '', password: '' };
 
 export default function SuperAdminsPage() {
   const { data: admins, isLoading } = useSuperAdmins();
   const { mutate: createAdmin, isPending } = useCreateSuperAdmin();
+  const { mutate: resetPassword, isPending: resetPending } = useResetSuperAdminPassword();
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(FORM_VIDE);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const [resetTarget, setResetTarget] = useState<{ id: string; nom: string } | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
+
+  function handleReset() {
+    if (newPassword.length < 8) { setResetError('8 caractères minimum'); return; }
+    setResetError('');
+    resetPassword(
+      { id: resetTarget!.id, password: newPassword },
+      {
+        onSuccess: () => {
+          setResetSuccess('Mot de passe réinitialisé avec succès');
+          setTimeout(() => { setResetTarget(null); setNewPassword(''); setResetSuccess(''); }, 1500);
+        },
+        onError: (e: any) => setResetError(e.response?.data?.message ?? 'Erreur lors de la réinitialisation'),
+      }
+    );
+  }
 
   function handleSubmit() {
     if (!form.nom.trim() || !form.email.trim() || form.password.length < 8) {
@@ -104,7 +126,8 @@ export default function SuperAdminsPage() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Nom</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Email</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Téléphone</th>
-                <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Statut</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Statut</th>
+                <th className="px-6 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -127,12 +150,19 @@ export default function SuperAdminsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">{admin.email}</td>
                   <td className="px-4 py-3 text-gray-500">{admin.telephone ?? '—'}</td>
-                  <td className="px-6 py-3 text-center">
+                  <td className="px-4 py-3 text-center">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       admin.actif ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}>
                       {admin.actif ? 'Actif' : 'Inactif'}
                     </span>
+                  </td>
+                  <td className="px-6 py-3 text-right">
+                    <button
+                      onClick={() => { setResetTarget({ id: admin.id, nom: admin.prenom ? `${admin.prenom} ${admin.nom}` : admin.nom }); setNewPassword(''); setResetError(''); setResetSuccess(''); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:border-[#1B3A2D] hover:text-[#1B3A2D] transition-colors">
+                      <KeyRound size={12} /> Réinitialiser MDP
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -140,6 +170,41 @@ export default function SuperAdminsPage() {
           </table>
         )}
       </div>
+
+      {/* Modal réinitialisation MDP */}
+      {resetTarget && (
+        <Modal title={`Réinitialiser le mot de passe — ${resetTarget.nom}`} onClose={() => setResetTarget(null)}>
+          <div className="space-y-4">
+            {resetSuccess ? (
+              <div className="bg-green-50 rounded-xl px-4 py-4 text-sm text-green-700 text-center font-medium">
+                ✓ {resetSuccess}
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500">
+                  Définissez un nouveau mot de passe pour ce compte. L&apos;administrateur devra l&apos;utiliser à sa prochaine connexion.
+                </p>
+                <Input
+                  label="Nouveau mot de passe *"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="8 caractères minimum"
+                />
+                {resetError && <p className="text-sm text-red-600">{resetError}</p>}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="secondary" className="flex-1 justify-center" onClick={() => setResetTarget(null)}>
+                    Annuler
+                  </Button>
+                  <Button className="flex-1 justify-center" loading={resetPending} onClick={handleReset}>
+                    <KeyRound size={14} /> Confirmer
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

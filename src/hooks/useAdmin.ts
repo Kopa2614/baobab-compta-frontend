@@ -87,6 +87,13 @@ export function useSuperAdmins() {
   });
 }
 
+export function useResetSuperAdminPassword() {
+  return useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) =>
+      api.patch(`/admin/super-admins/${id}/reset-password`, { nouveau_mot_de_passe: password }).then((r) => r.data),
+  });
+}
+
 export function useCreateSuperAdmin() {
   const queryClient = useQueryClient();
   return useMutation({
