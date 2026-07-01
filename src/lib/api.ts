@@ -19,7 +19,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       if (!window.location.pathname.includes('/login')) {
         localStorage.removeItem('baobab_token');
-        window.location.href = '/login';
+        localStorage.removeItem('baobab_user');
+        window.dispatchEvent(new CustomEvent('baobab_session_expired'));
       }
     }
     return Promise.reject(error);

@@ -5,6 +5,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner';
+import { SessionGuard } from '@/components/layout/SessionGuard';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <SessionGuard />
       <ImpersonationBanner />
       <div className="flex flex-1">
         <Sidebar />
