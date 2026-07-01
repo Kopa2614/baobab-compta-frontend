@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
+import { isImpersonating } from '@/lib/impersonate';
 
 export function SessionGuard() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export function SessionGuard() {
 
   useEffect(() => {
     function onExpired() {
+      if (isImpersonating()) return; // Ne pas interrompre une impersonation
       setExpired(true);
       setTimeout(() => router.replace('/login'), 4000);
     }
@@ -19,6 +21,7 @@ export function SessionGuard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      if (isImpersonating()) return; // Pas de poll pendant une impersonation
       api.get('/auth/me').catch(() => {});
     }, 30000);
     return () => clearInterval(interval);
