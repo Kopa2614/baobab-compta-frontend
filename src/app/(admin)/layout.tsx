@@ -1,8 +1,9 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { isAuthenticated } from '@/lib/auth';
 import { Building2, LayoutDashboard, LogOut, ShieldCheck, UserCog } from 'lucide-react';
 
 const navItems = [
@@ -15,12 +16,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { utilisateur, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated()) {
+      router.replace('/login');
+      return;
+    }
     if (utilisateur !== null && utilisateur.role !== 'super_admin') {
       router.replace('/dashboard');
+      return;
     }
+    if (utilisateur !== null) setChecked(true);
   }, [utilisateur, router]);
+
+  if (!checked) return null;
 
   return (
     <div className="flex h-screen bg-gray-50">
