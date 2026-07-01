@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [oubliePending, setOubliePending] = useState(false);
   const [oublieSuccess, setOublieSuccess] = useState(false);
   const [oublieError, setOublieError] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   async function handleOublie(e: React.FormEvent) {
     e.preventDefault();
@@ -67,7 +68,11 @@ export default function LoginPage() {
               </div>
 
               <form
-                onSubmit={async (e) => { e.preventDefault(); await login(email, mot_de_passe); }}
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const result = await login(email, mot_de_passe);
+                  if (result === 'needs_confirmation') setShowConfirm(true);
+                }}
                 className="space-y-8"
               >
                 {/* Email */}
@@ -196,6 +201,35 @@ export default function LoginPage() {
 
         </div>
       </div>
+
+      {/* Modal confirmation session existante */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center mb-5">
+              <span className="text-amber-500 text-xl">⚠</span>
+            </div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">Déjà connecté ailleurs</h3>
+            <p className="text-sm text-gray-500 leading-relaxed mb-6">
+              Ce compte est déjà connecté sur une autre session. Si vous continuez, l&apos;autre session sera déconnectée automatiquement.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={async () => { setShowConfirm(false); await login(email, mot_de_passe, true); }}
+                className="flex-1 py-2.5 rounded-xl bg-[#1B3A2D] text-white text-sm font-medium hover:bg-[#162E22] transition-colors"
+              >
+                Continuer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

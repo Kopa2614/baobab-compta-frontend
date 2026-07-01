@@ -31,12 +31,14 @@ export function useAuth() {
     return () => window.removeEventListener('baobab_user_updated', readStorage);
   }, []);
 
-  async function login(email: string, mot_de_passe: string) {
+  async function login(email: string, mot_de_passe: string, force = false): Promise<'needs_confirmation' | void> {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.post('/auth/login', { email, mot_de_passe });
-      // Clear any lingering impersonation state before setting the new session
+      const { data } = await api.post('/auth/login', { email, mot_de_passe, force });
+      if (data.needs_confirmation) {
+        return 'needs_confirmation';
+      }
       localStorage.removeItem('baobab_admin_session');
       setToken(data.token);
       const authState: AuthState = { utilisateur: data.utilisateur, entreprise: data.entreprise };
