@@ -44,7 +44,7 @@ export function Sidebar() {
   return (
     <aside className="w-52 bg-[#1B3A2D] min-h-screen flex flex-col shrink-0">
       <div className="px-4 py-5 border-b border-white/10 flex justify-center">
-        <Image src="/logo.png" alt="Baobab Gestion" width={110} height={70} className="object-contain" />
+        <Image src="/logo-dark.png" alt="Baobab Gestion" width={120} height={48} className="object-contain" />
       </div>
 
       <nav className="flex-1 px-3 py-3 space-y-0.5">

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import { Dancing_Script } from 'next/font/google';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
@@ -36,12 +37,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
 
-      {/* ── Colonne gauche – photo uniquement ── */}
-      {/* Ajouter /public/login-photo.jpg pour afficher la photo */}
+      {/* ── Colonne gauche ── */}
       <div
-        className="hidden md:block md:w-[38%] bg-[#1B3A2D] bg-cover bg-center"
+        className="hidden md:flex md:w-[38%] bg-[#1B3A2D] bg-cover bg-center items-center justify-center"
         style={{ backgroundImage: "url('/login-photo.jpg')" }}
-      />
+      >
+        <Image src="/logo-dark.png" alt="Baobab Gestion" width={200} height={80} className="object-contain" />
+      </div>
 
       {/* ── Colonne droite – logo + titre + formulaire ── */}
       <div className="flex-1 flex items-center justify-center bg-white px-10 py-12">
@@ -49,10 +51,7 @@ export default function LoginPage() {
 
           {/* Logo */}
           <div className="flex items-center justify-center mb-7">
-            <div className="text-center">
-              <span className="text-[#1B3A2D] font-bold text-xl tracking-tight">Baobab</span>
-              <span className="block text-[#1B3A2D] font-bold text-xl tracking-tight -mt-1">Gestion</span>
-            </div>
+            <Image src="/logo-light.png" alt="Baobab Gestion" width={160} height={64} className="object-contain" />
           </div>
 
           {/* ── Vue Connexion ── */}
